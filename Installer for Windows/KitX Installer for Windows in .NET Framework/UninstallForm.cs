@@ -72,14 +72,14 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             Thread.Sleep(2000);
             TaskbarManager.SetProgressState(TaskbarProgressBarState.Normal);
             TaskbarManager.SetProgressValue(10, 100);
-            if (form != null) form.UpdatePro(10);
+            form?.UpdatePro(10);
             Thread.Sleep(100);
 
             DeleteFolderAndFiles(installPath);
             Directory.Delete(installPath, true);
 
             TaskbarManager.SetProgressValue(70, 100);
-            if (form != null) form.UpdatePro(70);
+            form?.UpdatePro(70);
 
             string desktop = Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory);
             string startmn = Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms);
@@ -91,7 +91,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                 File.Delete($"{startmn}\\Crequency KitX Dashboard.lnk");
 
             TaskbarManager.SetProgressValue(75, 100);
-            if (form != null) form.UpdatePro(75);
+            form?.UpdatePro(75);
             Thread.Sleep(500);
 
             appPaths.DeleteSubKeyTree("KitX Dashboard.exe");
@@ -105,17 +105,16 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             software.Dispose();
 
             TaskbarManager.SetProgressValue(100, 100);
-            if (form != null) form.UpdatePro(100);
+            form?.UpdatePro(100);
             Thread.Sleep(1500);
 
-            if (form != null)
-                form.Invoke(new Action(() =>
-                {
-                    MessageBox.Show("KitX Uninstalled!\r\nKitX 已成功卸载.", "Tip | 提示",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+            form?.Invoke(new Action(() =>
+            {
+                MessageBox.Show("KitX Uninstalled!\r\nKitX 已成功卸载.", "Tip | 提示",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    form.Close();
-                }));
+                form.Close();
+            }));
         }
 
         internal static void DeleteFolderAndFiles(string path)
