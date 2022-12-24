@@ -1,0 +1,8 @@
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="KitX Installer for Windows in aardio";right=757;bottom=467;border="thin";clipch=1;max=false;min=false)
+mainForm.add()
+/*}}*/
+
+mainForm.show();
+return win.loopMessage();
