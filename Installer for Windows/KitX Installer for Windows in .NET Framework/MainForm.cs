@@ -16,12 +16,33 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 {
     public partial class MainForm : Form
     {
+        private int LanguageIndex = 0;
+
+        private string Lang(int index) => langs[index, LanguageIndex];
+
         public MainForm()
         {
+            var lang = new AskLanguage();
+            lang.OnSelect(x => LanguageIndex = x);
+            lang.ShowDialog();
+
             InitializeComponent();
 
             Thread_Install = new Thread(InstallProcess);
             Thread_Cancel = new Thread(CancelProcess);
+
+            InitUILangs();
+        }
+
+        private void InitUILangs()
+        {
+            Label_Tip.Text = Lang(32);
+            Btn_BeginInstall.Text = Lang(33);
+            checkBox_startAfterInstall.Text = Lang(35);
+            checkBox_addPath.Text = Lang(36);
+            checkBox_desktopShortcut.Text = Lang(37);
+            checkBox_startUpMenuShortCut.Text = Lang(38);
+            Text = Lang(39);
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
@@ -51,7 +72,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                     }
                     catch
                     {
-                        MessageBox.Show("Illegal Path | 非法路径", "Error | 错误",
+                        MessageBox.Show(Lang(0), Lang(1),
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
@@ -63,7 +84,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                 }
                 catch (Exception o)
                 {
-                    UpdateTip($"未知异常: {o.Message}");
+                    UpdateTip($"{Lang(2)}: {o.Message}");
                 }
                 BeginInstall();
             }
@@ -81,7 +102,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 
         private void InstallProcess()
         {
-            UpdateTip("开始安装 ...");
+            UpdateTip(Lang(3));
 
             string stfolder = Path.GetFullPath(TextBox_InstallPath.Text);
             string linkbase = "https://source.catrol.cn/download/apps/kitx/latest/";
@@ -94,7 +115,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             string targetPath = $"{stfolder}\\KitX Dashboard.exe";
             string modulePath = $"{stfolder}\\KitX Dashboard.dll";
             string uninstallPath = $"C:\\Windows\\Installer\\KitX Installer.exe";
-            string descr = "KitX Dashboard | KitX 控制面板";
+            string descr = Lang(4);
             string uninstallString = $"\"{uninstallPath}\" --uninstall";
             string helpLink = "https://apps.catrol.cn/kitx/help/";
             string infoLink = "https://apps.catrol.cn/kitx/";
@@ -105,7 +126,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 
             while (!File.Exists(filepath))
             {
-                UpdateTip("正在下载 ...");
+                UpdateTip($"{Lang(5)} ...");
                 Thread.Sleep(400);
                 try
                 {
@@ -113,7 +134,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                 }
                 catch (Exception e)
                 {
-                    UpdateTip($"下载发生异常, 请检查网络环境: {e.Message}");
+                    UpdateTip($"{Lang(6)}: {e.Message}");
                 }
 
                 if (!File.Exists(filepath))
@@ -121,7 +142,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                     bool choosed = false;
                     Invoke(new Action(() =>
                     {
-                        if (MessageBox.Show("Download failed! | 下载失败", "KitX",
+                        if (MessageBox.Show(Lang(7), "KitX",
                             MessageBoxButtons.RetryCancel, MessageBoxIcon.Error)
                             == DialogResult.Cancel)
                         {
@@ -140,7 +161,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 
             TaskbarManager.SetProgressState(TaskbarProgressBarState.Normal);
 
-            UpdateTip("下载完毕, 正在解压 ...");
+            UpdateTip(Lang(8));
             Invoke(new Action(() =>
             {
                 ProgressBar_Installing.Style = ProgressBarStyle.Blocks;
@@ -153,27 +174,27 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             ZipFile zip = new ZipFile();
             try
             {
-                UpdateTip("读取压缩包 ...");
+                UpdateTip(Lang(9));
                 Thread.Sleep(200);
                 zip = ZipFile.Read(filepath);
                 TaskbarManager.SetProgressValue(45, 100);
                 UpdatePro(45);
-                UpdateTip("解压压缩包 ...");
+                UpdateTip(Lang(10));
                 Thread.Sleep(200);
                 zip.ExtractAll(stfolder, ExtractExistingFileAction.OverwriteSilently);
                 TaskbarManager.SetProgressValue(50, 100);
                 UpdatePro(50);
                 zip.Dispose();
-                UpdateTip("解压完毕, 更新注册表 ...");
+                UpdateTip(Lang(11));
                 Thread.Sleep(200);
             }
             catch (Exception e)
             {
                 zip.Dispose();
-                UpdateTip($"解压失败: {e.Message}");
+                UpdateTip($"{Lang(12)}: {e.Message}");
                 Invoke(new Action(() =>
                 {
-                    MessageBox.Show("Cancel Setup! | 安装取消", "KitX",
+                    MessageBox.Show(Lang(13), "KitX",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }));
                 BeginCancel();
@@ -182,7 +203,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             TaskbarManager.SetProgressValue(60, 100);
             UpdatePro(60);
 
-            UpdateTip("打开注册表 ...");
+            UpdateTip(Lang(14));
             Thread.Sleep(200);
 
             try
@@ -194,7 +215,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                 RegistryKey uninstall = software.OpenSubKey("Uninstall", true);
 
                 #region 更新 AppPaths
-                UpdateTip("写入注册表 App Paths ...");
+                UpdateTip(Lang(15));
                 Thread.Sleep(200);
                 {
                     RegistryKey appPaths_KitX = appPaths.CreateSubKey("KitX Dashboard.exe");
@@ -211,7 +232,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                 string version = fvi.ProductVersion;
 
                 #region 更新 控制面板中所对应的程序信息
-                UpdateTip("写入注册表 Uninstall ...");
+                UpdateTip(Lang(16));
                 Thread.Sleep(200);
                 {
                     RegistryKey uninstall_KitX = uninstall.CreateSubKey("KitX");
@@ -236,7 +257,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
                 UpdatePro(70);
 
                 #region 更新 文件关联
-                UpdateTip("写入注册表 文件关联 ...");
+                UpdateTip(Lang(17));
                 Thread.Sleep(200);
                 {
                     RegistryKey fileCon = Registry.ClassesRoot.CreateSubKey(".kxp");
@@ -265,10 +286,10 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             }
             catch (Exception e)
             {
-                UpdateTip($"写入注册表失败: {e.Message}");
+                UpdateTip($"{Lang(18)}: {e.Message}");
                 Invoke(new Action(() =>
                 {
-                    MessageBox.Show("Cancel Setup! | 安装取消", "KitX",
+                    MessageBox.Show(Lang(13), "KitX",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }));
                 BeginCancel();
@@ -277,7 +298,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             TaskbarManager.SetProgressValue(75, 100);
             UpdatePro(75);
 
-            UpdateTip("更新快捷方式 ...");
+            UpdateTip(Lang(19));
             Thread.Sleep(200);
 
             try
@@ -290,10 +311,10 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             }
             catch (Exception e)
             {
-                UpdateTip($"创建快捷方式失败: {e.Message}");
+                UpdateTip($"{Lang(20)}: {e.Message}");
                 Invoke(new Action(() =>
                 {
-                    MessageBox.Show("Cancel Setup! | 安装取消", "KitX",
+                    MessageBox.Show(Lang(13), "KitX",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }));
                 BeginCancel();
@@ -302,7 +323,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             TaskbarManager.SetProgressValue(80, 100);
             UpdatePro(80);
 
-            UpdateTip("生成卸载程序 ...");
+            UpdateTip(Lang(21));
             Thread.Sleep(200);
 
             try
@@ -316,10 +337,10 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             }
             catch (Exception e)
             {
-                UpdateTip($"生成卸载程序失败: {e.Message}");
+                UpdateTip($"{Lang(22)}: {e.Message}");
                 Invoke(new Action(() =>
                 {
-                    MessageBox.Show("Cancel Setup! | 安装取消", "KitX",
+                    MessageBox.Show(Lang(13), "KitX",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }));
                 BeginCancel();
@@ -328,7 +349,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             TaskbarManager.SetProgressValue(90, 100);
             UpdatePro(90);
 
-            UpdateTip("更新安装目录权限 ...");
+            UpdateTip(Lang(23));
             Thread.Sleep(300);
 
             try
@@ -346,10 +367,10 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 
                 if (!isModified)
                 {
-                    UpdateTip($"安装目录权限未能更改");
+                    UpdateTip(Lang(24));
                     Invoke(new Action(() =>
                     {
-                        MessageBox.Show("Cancel Setup! | 安装取消", "KitX",
+                        MessageBox.Show(Lang(13), "KitX",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }));
                     BeginCancel();
@@ -357,10 +378,10 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             }
             catch (Exception e)
             {
-                UpdateTip($"安装目录权限更改失败: {e.Message}");
+                UpdateTip($"{Lang(25)}: {e.Message}");
                 Invoke(new Action(() =>
                 {
-                    MessageBox.Show("Cancel Setup! | 安装取消", "KitX",
+                    MessageBox.Show(Lang(13), "KitX",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }));
                 BeginCancel();
@@ -369,13 +390,13 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             TaskbarManager.SetProgressValue(100, 100);
             UpdatePro(100);
 
-            UpdateTip("安装目录权限更新成功 ...");
+            UpdateTip(Lang(26));
             Thread.Sleep(500);
 
-            UpdateTip("安装成功!");
+            UpdateTip(Lang(27));
             Invoke(new Action(() =>
             {
-                MessageBox.Show("Install succeed! | 安装成功", "KitX",
+                MessageBox.Show(Lang(27), "KitX",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 TaskbarManager.SetProgressState(TaskbarProgressBarState.NoProgress);
@@ -383,29 +404,18 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 
             try
             {
-                if (MessageBox.Show("Start now? | 现在启动吗?", "KitX",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (checkBox_startAfterInstall.Checked)
                 {
                     Process.Start("cmd.exe", $"/C cd /d {stfolder} && runas.exe /TrustLevel:0x20000 " +
                         $"\"{targetPath}\"");
                 }
-
-                //Process.Start("explorer.exe", targetPath);
-
-                //Process process = new Process();
-                //process.StartInfo.FileName = $"{stfolder}\\KitX Dashboard.exe";
-                //process.StartInfo.WorkingDirectory = stfolder;
-                //process.StartInfo.UserName = Environment.UserName;
-                //process.StartInfo.UseShellExecute = false;
-                //process.Start();
             }
             catch (Exception e)
             {
-                UpdateTip($"启动 KitX Dashboard 失败: {e.Message}");
+                UpdateTip($"{Lang(28)}: {e.Message}");
                 Invoke(new Action(() =>
                 {
-                    MessageBox.Show($"Failed to start KitX Dashboard!\r\n无法启动 KitX 仪表盘\r\n{e.Message}",
-                        "Error | 错误",
+                    MessageBox.Show($"{Lang(29)}\r\n{e.Message}", Lang(1),
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }));
             }
@@ -459,13 +469,13 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 
             string stfolder = Path.GetFullPath(TextBox_InstallPath.Text);
 
-            UpdateTip("正在取消 ...");
+            UpdateTip(Lang(30));
 
             Thread_Install.Abort();
 
             while (Thread_Install.ThreadState != ThreadState.Aborted) { }
 
-            UpdateTip("正在回滚 ...");
+            UpdateTip(Lang(31));
 
             Directory.Delete(stfolder, true);
 
@@ -473,7 +483,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
 
             Invoke(new Action(() =>
             {
-                UpdateTip("等待用户操作 ...");
+                UpdateTip(Lang(32));
 
                 Btn_BeginInstall.Enabled = false;
 
@@ -523,7 +533,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             AcceptButton = Btn_BeginInstall;
             CancelButton = null;
             Btn_BeginInstall.Enabled = true;
-            Btn_BeginInstall.Text = "Install | 安装";
+            Btn_BeginInstall.Text = Lang(33);
             Btn_BeginInstall.Size = new Size(180, 50);
             Btn_BeginInstall.Location = new Point(310, 480);
         }
@@ -533,7 +543,7 @@ namespace KitX_Installer_for_Windows_in.NET_Framework
             AcceptButton = null;
             CancelButton = Btn_BeginInstall;
             Btn_BeginInstall.Enabled = true;
-            Btn_BeginInstall.Text = "Cancel Installing | 取消安装";
+            Btn_BeginInstall.Text = Lang(34);
             Btn_BeginInstall.Size = new Size(300, 50);
             Btn_BeginInstall.Location = new Point(250, 480);
         }
