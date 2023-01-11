@@ -84,7 +84,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AskLanguage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AskLanguage.Designer.cs">
+      <DependentUpon>AskLanguage.cs</DependentUpon>
+    </Compile>
     <Compile Include="Drawer.cs" />
+    <Compile Include="MainFormLanguages.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="TaskbarManager.cs" />
     <Compile Include="UninstallForm.cs">
       <SubType>Form</SubType>
@@ -100,6 +109,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="AskLanguage.resx">
+      <DependentUpon>AskLanguage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UninstallForm.resx">
       <DependentUpon>UninstallForm.cs</DependentUpon>
     </EmbeddedResource>
