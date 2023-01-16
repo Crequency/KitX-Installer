@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // 有关程序集的一般信息由以下
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
-[assembly: AssemblyTitle("KitX Installer for Windows in .NET Framework")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("KitX Installer")]
+[assembly: AssemblyDescription("KitX Installer for Windows in .NET Framework")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("KitX Installer for Windows in .NET Framework")]
+[assembly: AssemblyCompany("Crequency")]
+[assembly: AssemblyProduct("KitX")]
 [assembly: AssemblyCopyright("Copyright © Crequency 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
