@@ -2,9 +2,17 @@
 
 mod application;
 
-fn main() -> Result<(), eframe::Error> {
+fn main() {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
+    if cfg!(target_os = "windows") {
+        if run_gui().is_err() {
+            eprintln!("Failed to run GUI");
+        }
+    }
+}
+
+fn run_gui() -> Result<(), eframe::Error> {
     let options = application::get_native_options(None);
 
     eframe::run_native(
