@@ -44,14 +44,13 @@ impl eframe::App for AppData {
         // _frame.set_window_size(get_native_options(None).initial_window_size.unwrap_or(egui::vec2(800.0, 500.0)));
 
         egui::CentralPanel::default().show(ctx, |ui| {
-
             egui::SidePanel::left("left_panel")
                 .resizable(false)
                 .default_width(200.0)
                 // .width_range(80.0..=200.0)
                 .show_inside(ui, |ui| {
                     ui.vertical_centered(|ui| {
-                        ui.heading(RichText::new("Catalog").size(heading_text_font_size));
+                        ui.heading(RichText::new("Steps").size(heading_text_font_size));
                         ui.label("");
                         ui.separator();
                         ui.label("");
@@ -99,12 +98,16 @@ impl eframe::App for AppData {
                                     self.steps = self.steps + 1;
                                 }
                             }
-                            if ui
-                                .button(RichText::new("< Previous").size(basic_button_font_size))
-                                .clicked()
-                            {
-                                if self.steps > 0 {
-                                    self.steps = self.steps - 1;
+                            if self.steps != 0 {
+                                if ui
+                                    .button(
+                                        RichText::new("< Previous").size(basic_button_font_size),
+                                    )
+                                    .clicked()
+                                {
+                                    if self.steps > 0 {
+                                        self.steps = self.steps - 1;
+                                    }
                                 }
                             }
                         } else if self.steps == 2 {
@@ -123,15 +126,22 @@ impl eframe::App for AppData {
                                 }
                             }
                         } else if self.steps == 3 {
-                            if ui.button(RichText::new("Cancel").size(basic_button_font_size)).clicked() {
+                            if ui
+                                .button(RichText::new("Cancel").size(basic_button_font_size))
+                                .clicked()
+                            {
                                 self.steps = self.steps - 1;
                             }
-                            // TODO: Remove in release.
-                            if ui.button("debug: next").clicked() {
-                                self.steps = self.steps + 1;
+                            if cfg!(debug_assertions) {
+                                if ui.button("debug: next").clicked() {
+                                    self.steps = self.steps + 1;
+                                }
                             }
                         } else {
-                            if ui.button(RichText::new("Finish").size(basic_button_font_size)).clicked() {
+                            if ui
+                                .button(RichText::new("Finish").size(basic_button_font_size))
+                                .clicked()
+                            {
                                 _frame.close();
                             }
                         }
