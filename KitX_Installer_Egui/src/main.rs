@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+mod data;
 mod platforms;
 use crate::platforms::windows::application;
 
@@ -10,6 +11,8 @@ fn main() {
         if run_gui().is_err() {
             eprintln!("Failed to run GUI");
         }
+    } else {
+        run_cli();
     }
 }
 
@@ -21,4 +24,9 @@ fn run_gui() -> Result<(), eframe::Error> {
         options,
         Box::new(|_cc| Box::<application::AppData>::default()),
     )
+}
+
+fn run_cli() {
+    println!("KitX Installer CLI");
+    println!("v0.1.0");
 }
