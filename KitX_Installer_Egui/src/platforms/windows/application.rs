@@ -1,5 +1,5 @@
 ﻿use eframe::{
-    egui::{self, RichText},
+    egui::{self, RichText, Ui},
     epaint::{Color32, Vec2},
 };
 
@@ -29,6 +29,8 @@ pub struct AppData {
     heading_text_font_size: f32,
     catalog_item_font_size: f32,
     basic_button_font_size: f32,
+    tip_text_font_size: f32,
+    content_text_font_size: f32,
     license_agreed: bool,
     license_url: String,
     license_url_backup: String,
@@ -38,6 +40,8 @@ pub struct AppData {
     installation_path: String,
     create_desktop_shortcut: bool,
     create_start_menu_shortcut: bool,
+    launch_after_install: bool,
+    install_progress: f32,
 }
 
 impl Default for AppData {
@@ -48,6 +52,8 @@ impl Default for AppData {
             heading_text_font_size: 28.0,
             catalog_item_font_size: 16.0,
             basic_button_font_size: 16.0,
+            tip_text_font_size: 18.0,
+            content_text_font_size: 14.0,
             license_agreed: false,
             license_url: "https://raw.githubusercontent.com/Crequency/KitX/main/LICENSE"
                 .to_string(),
@@ -60,11 +66,13 @@ impl Default for AppData {
             installation_path: "C:\\Program Files\\Crequency\\KitX\\".to_string(),
             create_desktop_shortcut: false,
             create_start_menu_shortcut: true,
+            launch_after_install: true,
+            install_progress: 0.0,
         }
     }
 }
 
-impl eframe::App for AppData {
+impl AppData {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // if _frame.info().window_info.maximized {
         //     _frame.set_window_size(egui::vec2(800.0, 500.0));
@@ -72,13 +80,30 @@ impl eframe::App for AppData {
         // _frame.set_window_size(get_native_options(None).initial_window_size.unwrap_or(egui::vec2(800.0, 500.0)));
 
         egui::CentralPanel::default().show(ctx, |ui| {
+    fn build_heading_text(&mut self, text: &str) -> RichText {
+        RichText::new(text).size(self.heading_text_font_size)
+    }
+
+    fn build_catalog_text(&mut self, text: &str) -> RichText {
+        RichText::new(text).size(self.catalog_item_font_size)
+    }
+
+    fn build_content_text(&mut self, text: &str) -> RichText {
+        RichText::new(text).size(self.content_text_font_size)
+    }
+
+    fn build_button_text(&mut self, text: &str) -> RichText {
+        RichText::new(text).size(self.basic_button_font_size)
+    }
+
+    fn draw_steps(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
             egui::SidePanel::left("left_panel")
                 .resizable(false)
                 .default_width(200.0)
                 // .width_range(80.0..=200.0)
                 .show_inside(ui, |ui| {
                     ui.vertical_centered(|ui| {
-                        ui.heading(RichText::new("Steps").size(self.heading_text_font_size));
+                    ui.heading(self.build_heading_text("Steps"));
                         ui.label("");
                         ui.separator();
                         ui.label("");
@@ -86,19 +111,25 @@ impl eframe::App for AppData {
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         let mut catalog_painter = |step: i32, tip: String| {
                             if self.steps > step {
-                                ui.label(
-                                    RichText::new(tip)
-                                        .color(Color32::LIGHT_GREEN)
-                                        .size(self.catalog_item_font_size),
-                                );
+                            let finished = self.build_catalog_text(&tip);
+                            ui.label(finished.color(
+                                if _frame.info().system_theme.unwrap() == eframe::Theme::Light {
+                                    Color32::DARK_GREEN
+                                } else {
+                                    Color32::LIGHT_GREEN
+                                },
+                            ));
                             } else if self.steps == step {
-                                ui.label(
-                                    RichText::new(tip)
-                                        .color(Color32::LIGHT_BLUE)
-                                        .size(self.catalog_item_font_size),
-                                );
+                            let executing = self.build_catalog_text(&tip);
+                            ui.label(executing.color(
+                                if _frame.info().system_theme.unwrap() == eframe::Theme::Light {
+                                    Color32::DARK_BLUE
                             } else {
-                                ui.label(RichText::new(tip).size(self.catalog_item_font_size));
+                                    Color32::LIGHT_BLUE
+                                },
+                            ));
+                        } else {
+                            ui.label(self.build_catalog_text(&tip));
                             }
                             ui.end_row();
                             ui.label("");
@@ -110,23 +141,24 @@ impl eframe::App for AppData {
                         catalog_painter(4, "4. Finished".to_string());
                     });
                 });
+    }
 
+    fn draw_bottom_panel(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
             egui::TopBottomPanel::bottom("bottom_panel")
                 .resizable(false)
                 .min_height(0.0)
                 .default_height(40.0)
                 .show_inside(ui, |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if self.steps < 2 {
-                            self.can_goto_install_config_step = self.license_agreed;
+                    let previous = self.build_button_text("< Previous");
+                    let next = self.build_button_text("Next >");
+                    let install = self.build_button_text("Install");
+                    let cancle = self.build_button_text("Cancle");
+                    let finish = self.build_button_text("Finish");
 
+                    if self.steps < 2 {
                             if self.steps == 0 || self.can_goto_install_config_step {
-                                if ui
-                                    .button(
-                                        RichText::new("Next >").size(self.basic_button_font_size),
-                                    )
-                                    .clicked()
-                                {
+                            if ui.button(next).clicked() {
                                     if self.steps < self.max_steps_count - 1 {
                                         self.steps = self.steps + 1;
                                     }
@@ -134,40 +166,25 @@ impl eframe::App for AppData {
                             }
 
                             if self.steps != 0 {
-                                if ui
-                                    .button(
-                                        RichText::new("< Previous")
-                                            .size(self.basic_button_font_size),
-                                    )
-                                    .clicked()
-                                {
+                            if ui.button(previous).clicked() {
                                     if self.steps > 0 {
                                         self.steps = self.steps - 1;
                                     }
                                 }
                             }
                         } else if self.steps == 2 {
-                            if ui
-                                .button(RichText::new("Install").size(self.basic_button_font_size))
-                                .clicked()
-                            {
+                        if self.can_goto_install_step {
+                            if ui.button(install).clicked() {
                                 self.steps = self.steps + 1;
                             }
-                            if ui
-                                .button(
-                                    RichText::new("< Previous").size(self.basic_button_font_size),
-                                )
-                                .clicked()
-                            {
+                        }
+                        if ui.button(previous).clicked() {
                                 if self.steps > 0 {
                                     self.steps = self.steps - 1;
                                 }
                             }
                         } else if self.steps == 3 {
-                            if ui
-                                .button(RichText::new("Cancel").size(self.basic_button_font_size))
-                                .clicked()
-                            {
+                        if ui.button(cancle).clicked() {
                                 self.steps = self.steps - 1;
                             }
                             if cfg!(debug_assertions) {
@@ -176,45 +193,36 @@ impl eframe::App for AppData {
                                 }
                             }
                         } else {
-                            if ui
-                                .button(RichText::new("Finish").size(self.basic_button_font_size))
-                                .clicked()
-                            {
+                        if ui.button(finish).clicked() {
                                 _frame.close();
                             }
                         }
                     });
                 });
+    }
 
+    fn draw_body(&mut self, ui: &mut Ui) {
             ui.vertical_centered(|ui| {
-                ui.heading(RichText::new("KitX Installer").size(self.heading_text_font_size));
+            ui.heading(self.build_heading_text("KitX Installer"));
                 ui.label("");
 
                 if self.steps == 0 {
                     ui.with_layout(egui::Layout::top_down(egui::Align::TOP), |ui| {
-                        ui.label(
-                            "    Welcome to KitX Project! You are running the KitX Installer.",
-                        );
-                        ui.label(
-                            "    This installer will install KitX Dashboard into your device.",
-                        );
+                    ui.label(self.build_content_text("    Welcome to KitX Project! You are running the KitX Installer."));
+                    ui.label(self.build_content_text("    This installer will install KitX Dashboard into your device."));
                         ui.label("    ");
-                        ui.label(
-                            "    This is a online installer, you need to connect to the internet.",
-                        );
-                        ui.label(
-                            "    We are not responsible for the traffic charges incurred during the installation process."
-                        );
+                    ui.label(self.build_content_text("    This is a online installer, you need to connect to the internet."));
+                    ui.label(self.build_content_text("    We are not responsible for the traffic charges incurred during the installation process."));
                         ui.label("    ");
                         ui.horizontal_wrapped(|ui| {
-                            ui.label("    You can fetch all source code via");
-                            ui.hyperlink_to("Github", "https://github.com/Crequency/KitX");
-                            ui.label(".")
+                        ui.label(self.build_content_text("    You can fetch all source code via"));
+                        ui.hyperlink_to(self.build_content_text("Github"), "https://github.com/Crequency/KitX");
+                        ui.label(self.build_content_text("."));
                         });
                         ui.horizontal_wrapped(|ui| {
-                            ui.label("    Visit our");
-                            ui.hyperlink_to("Home Page", "https://kitx.apps.catrol.cn");
-                            ui.label("for more.")
+                        ui.label(self.build_content_text("    Visit our"));
+                        ui.hyperlink_to(self.build_content_text("Home Page"), "https://kitx.apps.catrol.cn");
+                        ui.label(self.build_content_text("for more."));
                         });
                     });
                 } else if self.steps == 1 {
@@ -241,7 +249,7 @@ impl eframe::App for AppData {
                                 license_content_lines.clone().count(),
                                 |ui, row_range| {
                                     for row in row_range {
-                                        ui.label(license_content_lines.clone().nth(row).unwrap());
+                                    ui.label(self.build_content_text(license_content_lines.clone().nth(row).unwrap()));
                                     }
                                 },
                             );
@@ -251,10 +259,12 @@ impl eframe::App for AppData {
                     ui.add_space(10.0);
 
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    let agreement = self.build_content_text("  I agree to the terms of the license agreement.");
+
                         ui.label("    ");
                         ui.checkbox(
                             &mut self.license_agreed,
-                            "  I agree to the terms of the license agreement.",
+                        agreement,
                         );
                         ui.end_row();
                     });
@@ -265,10 +275,11 @@ impl eframe::App for AppData {
                         .striped(false)
                         .show(ui, |ui| {
                             ui.label("");
-                            ui.label("Installation path: ");
+                        ui.label(self.build_content_text("Installation path: "));
                             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                                 ui.add(
                                     egui::TextEdit::singleline(&mut self.installation_path)
+                                    .hint_text("C:\\Program Files\\Crequency\\KitX")
                                 );
                                 if ui.button("...").clicked() {
 
@@ -276,19 +287,52 @@ impl eframe::App for AppData {
                             });
                             ui.end_row();
                             ui.end_row();
+
+                        let desktop_shortcut = self.build_content_text("  Create desktop shortcut.");
+                        let start_menu_shortcut = self.build_content_text("  Create start menu shortcut.");
+                        let launch_after_install = self.build_content_text("  Launch after installation.");
+
+                        ui.label("");
+                        ui.checkbox(&mut self.create_desktop_shortcut, desktop_shortcut);
+                        ui.end_row();
+                        ui.end_row();
+
                             ui.label("");
-                            ui.checkbox(&mut self.create_desktop_shortcut, "Create desktop shortcut.");
+                        ui.checkbox(&mut self.create_start_menu_shortcut, start_menu_shortcut);
                             ui.end_row();
                             ui.end_row();
+
                             ui.label("");
-                            ui.checkbox(&mut self.create_start_menu_shortcut, "Create start menu shortcut.");
+                        ui.checkbox(&mut self.launch_after_install, launch_after_install);
                             ui.end_row();
                             ui.end_row();
                         });
                 } else if self.steps == 3 {
+                ui.vertical(|ui|{
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                        ui.label(egui::RichText::new("    Installing ...").size(self.tip_text_font_size));
+                        ui.add(egui::ProgressBar::new(self.install_progress).animate(false).show_percentage().desired_width(460.0));
+                    });
+                    ui.end_row();
+                });
                 } else if self.steps == 4 {
                 }
             });
+    }
+}
+
+impl eframe::App for AppData {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // if _frame.info().window_info.maximized {
+        //     _frame.set_window_size(egui::vec2(800.0, 500.0));
+        // }
+        // _frame.set_window_size(get_native_options(None).initial_window_size.unwrap_or(egui::vec2(800.0, 500.0)));
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            self.draw_steps(ui, _frame);
+            self.draw_bottom_panel(ui, _frame);
+            self.draw_body(ui);
+
         });
     }
 }
