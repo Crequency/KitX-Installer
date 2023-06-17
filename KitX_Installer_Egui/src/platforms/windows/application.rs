@@ -7,13 +7,16 @@ use crate::data::data_fetcher;
 
 pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
     let size = size.unwrap_or(egui::vec2(800.0, 500.0));
+    let mut min_size = size.clone();
+    min_size.x = 780.0;
+    min_size.y = 480.0;
 
     let options = eframe::NativeOptions {
         initial_window_size: Some(size),
         centered: true,
-        max_window_size: Some(size),
-        min_window_size: Some(size),
-        resizable: false,
+        // max_window_size: Some(size),
+        min_window_size: Some(min_size),
+        // resizable: false,
         ..Default::default()
     };
 
