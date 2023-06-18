@@ -5,6 +5,8 @@
 
 use crate::data::{data_fetcher, data_validator};
 
+use super::reg_helper;
+
 pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
     let size = size.unwrap_or(egui::vec2(800.0, 500.0));
     let mut min_size = size.clone();
@@ -24,6 +26,8 @@ pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
 }
 
 pub struct AppData {
+    frame_index: i32,
+    frame_per_second: i32,
     steps: i32,
     max_steps_count: i32,
     heading_text_font_size: f32,
@@ -33,6 +37,7 @@ pub struct AppData {
     content_text_font_size: f32,
     license_agreed: bool,
     license_url: String,
+    license_url_tried: bool,
     license_url_backup: String,
     license_content: Option<String>,
     can_goto_install_config_step: bool,
@@ -40,13 +45,18 @@ pub struct AppData {
     installation_path: String,
     create_desktop_shortcut: bool,
     create_start_menu_shortcut: bool,
+    install_as_portable: bool,
     launch_after_install: bool,
+    desktop_path: Option<String>,
+    start_menu_path: Option<String>,
     install_progress: f32,
 }
 
 impl Default for AppData {
     fn default() -> Self {
         Self {
+            frame_index: 0,
+            frame_per_second: 60,
             steps: 0,
             max_steps_count: 5,
             heading_text_font_size: 28.0,
@@ -57,6 +67,7 @@ impl Default for AppData {
             license_agreed: false,
             license_url: "https://raw.githubusercontent.com/Crequency/KitX/main/LICENSE"
                 .to_string(),
+            license_url_tried: false,
             license_url_backup:
                 "https://ghproxy.com/raw.githubusercontent.com/Crequency/KitX/main/LICENSE"
                     .to_string(),
@@ -66,13 +77,45 @@ impl Default for AppData {
             installation_path: "C:\\Program Files\\Crequency\\KitX\\".to_string(),
             create_desktop_shortcut: false,
             create_start_menu_shortcut: true,
+            install_as_portable: false,
             launch_after_install: true,
+            desktop_path: None,
+            start_menu_path: None,
             install_progress: 0.0,
         }
     }
 }
 
 impl AppData {
+    fn init(&mut self) {
+        self.frame_index = self.frame_index + 1;
+        if self.frame_index >= self.frame_per_second {
+            self.frame_index = 0;
+        }
+
+        if self.desktop_path == None {
+            self.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
+            println!("Desktop directory: {:?}", self.desktop_path);
+        }
+
+        if self.start_menu_path == None {
+            self.start_menu_path = Some(reg_helper::get_start_menu_path().unwrap());
+            println!("Start menu directory: {:?}", self.start_menu_path);
+        }
+
+        if self.license_content == None {
+            if self.license_url_tried {
+                self.license_content = Some(data_fetcher::fetch_string(
+                    self.license_url_backup.to_string(),
+                ));
+            } else {
+                self.license_url_tried = true;
+                self.license_content =
+                    Some(data_fetcher::fetch_string(self.license_url.to_string()));
+            }
+        }
+    }
+
     fn validater(&mut self) {
         self.can_goto_install_config_step = self.license_agreed;
 
@@ -210,122 +253,187 @@ impl AppData {
             ui.label("");
 
             if self.steps == 0 {
-                ui.with_layout(egui::Layout::top_down(egui::Align::TOP), |ui| {
-                    ui.label(self.build_content_text("    Welcome to KitX Project! You are running the KitX Installer."));
-                    ui.label(self.build_content_text("    This installer will install KitX Dashboard into your device."));
-                    ui.label("    ");
-                    ui.label(self.build_content_text("    This is a online installer, you need to connect to the internet."));
-                    ui.label(self.build_content_text("    We are not responsible for the traffic charges incurred during the installation process."));
-                    ui.label("    ");
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label(self.build_content_text("    You can fetch all source code via"));
-                        ui.hyperlink_to(self.build_content_text("Github"), "https://github.com/Crequency/KitX");
-                        ui.label(self.build_content_text("."));
-                    });
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label(self.build_content_text("    Visit our"));
-                        ui.hyperlink_to(self.build_content_text("Home Page"), "https://kitx.apps.catrol.cn");
-                        ui.label(self.build_content_text("for more."));
-                    });
-                });
+                self.draw_body_hello(ui);
             } else if self.steps == 1 {
-                if self.license_content == None {
-                    self.license_content =
-                        Some(data_fetcher::fetch_string(self.license_url.to_string()));
-                }
-
-                ui.vertical_centered(|ui| {
-                    let license_content = self
-                        .license_content
-                        .clone()
-                        .unwrap_or("Fetching ...".to_string())
-                        .to_string();
-                    let license_content_lines = license_content.split('\n');
-
-                    let text_style = egui::TextStyle::Body;
-                    let row_height = ui.text_style_height(&text_style);
-                    egui::ScrollArea::vertical()
-                        .auto_shrink([false; 2])
-                        .show_rows(
-                            ui,
-                            row_height,
-                            license_content_lines.clone().count(),
-                            |ui, row_range| {
-                                for row in row_range {
-                                    ui.label(self.build_content_text(license_content_lines.clone().nth(row).unwrap()));
-                                }
-                            },
-                        );
-                    ui.end_row();
-                });
-
-                ui.add_space(10.0);
-
-                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                    let agreement = self.build_content_text("  I agree to the terms of the license agreement.");
-
-                    ui.label("    ");
-                    ui.checkbox(
-                        &mut self.license_agreed,
-                        agreement,
-                    );
-                    ui.end_row();
-                });
+                self.draw_body_license(ui);
             } else if self.steps == 2 {
-                egui::Grid::new("my_grid")
-                    .num_columns(3)
-                    // .spacing([40.0, 4.0])
-                    .striped(false)
-                    .show(ui, |ui| {
-                        ui.label("");
-                        ui.label(self.build_content_text("Installation path: "));
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                            ui.add(
-                                egui::TextEdit::singleline(&mut self.installation_path)
-                                    .hint_text("C:\\Program Files\\Crequency\\KitX")
-                            );
-                            if ui.button("...").clicked() {
-
-                            }
-                        });
-                        ui.end_row();
-                        ui.end_row();
-
-                        let desktop_shortcut = self.build_content_text("  Create desktop shortcut.");
-                        let start_menu_shortcut = self.build_content_text("  Create start menu shortcut.");
-                        let launch_after_install = self.build_content_text("  Launch after installation.");
-
-                        ui.label("");
-                        ui.checkbox(&mut self.create_desktop_shortcut, desktop_shortcut);
-                        ui.end_row();
-                        ui.end_row();
-
-                        ui.label("");
-                        ui.checkbox(&mut self.create_start_menu_shortcut, start_menu_shortcut);
-                        ui.end_row();
-                        ui.end_row();
-
-                        ui.label("");
-                        ui.checkbox(&mut self.launch_after_install, launch_after_install);
-                        ui.end_row();
-                        ui.end_row();
-                    });
+                self.draw_body_installation_config(ui);
             } else if self.steps == 3 {
-                ui.vertical(|ui|{
-                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                        ui.label(egui::RichText::new("    Installing ...").size(self.tip_text_font_size));
-                        ui.add(egui::ProgressBar::new(self.install_progress).animate(false).show_percentage().desired_width(460.0));
-                    });
-                    ui.end_row();
-                });
+                self.draw_body_installation(ui);
             } else if self.steps == 4 {
+                self.draw_body_finished(ui);
             }
+        });
+    }
+
+    fn draw_body_hello(&mut self, ui: &mut Ui) {
+        ui.with_layout(egui::Layout::top_down(egui::Align::TOP), |ui| {
+            ui.label(self.build_content_text("    Welcome to KitX Project! You are running the KitX Installer."));
+            ui.label(self.build_content_text("    This installer will install KitX Dashboard into your device."));
+            ui.label("    ");
+            ui.label(self.build_content_text("    This is a online installer, you need to connect to the internet."));
+            ui.label(self.build_content_text("    We are not responsible for the traffic charges incurred during the installation process."));
+            ui.label("    ");
+            ui.horizontal_wrapped(|ui| {
+                ui.label(self.build_content_text("    You can fetch all source code via"));
+                ui.hyperlink_to(self.build_content_text("Github"), "https://github.com/Crequency/KitX");
+                ui.label(self.build_content_text("."));
+            });
+            ui.horizontal_wrapped(|ui| {
+                ui.label(self.build_content_text("    Visit our"));
+                ui.hyperlink_to(self.build_content_text("Home Page"), "https://kitx.apps.catrol.cn");
+                ui.label(self.build_content_text("for more."));
+            });
+        });
+    }
+
+    fn draw_body_license(&mut self, ui: &mut Ui) {
+        ui.vertical_centered(|ui| {
+            let license_content = self
+                .license_content
+                .clone()
+                .unwrap_or("Fetching ...".to_string())
+                .to_string();
+            let license_content_lines = license_content.split('\n');
+
+            let text_style = egui::TextStyle::Body;
+            let row_height = ui.text_style_height(&text_style);
+            egui::ScrollArea::vertical()
+                .auto_shrink([false; 2])
+                .show_rows(
+                    ui,
+                    row_height,
+                    license_content_lines.clone().count(),
+                    |ui, row_range| {
+                        for row in row_range {
+                            ui.label(self.build_content_text(
+                                license_content_lines.clone().nth(row).unwrap(),
+                            ));
+                        }
+                    },
+                );
+            ui.end_row();
+        });
+
+        ui.add_space(10.0);
+
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+            let agreement =
+                self.build_content_text("  I agree to the terms of the license agreement.");
+
+            ui.label("    ");
+            ui.checkbox(&mut self.license_agreed, agreement);
+            ui.end_row();
+        });
+    }
+
+    fn draw_body_installation_config(&mut self, ui: &mut Ui) {
+        egui::Grid::new("installation_config_path_grid")
+            .num_columns(3)
+            // .spacing([40.0, 4.0])
+            .striped(false)
+            .show(ui, |ui| {
+                ui.label("");
+                ui.label(self.build_content_text("Installation path: "));
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.installation_path)
+                            .hint_text("C:\\Program Files\\Crequency\\KitX"),
+                    );
+                    if ui.button("...").clicked() {}
+                });
+                ui.end_row();
+                ui.end_row();
+            });
+
+        ui.label("");
+        ui.label("");
+
+        egui::Grid::new("installation_config_options_grid")
+            .num_columns(3)
+            // .spacing([40.0, 4.0])
+            .striped(false)
+            .show(ui, |ui| {
+                let desktop_shortcut = self.build_content_text("  Create desktop shortcut.");
+                let start_menu_shortcut = self.build_content_text("  Create start menu shortcut.");
+                let portable_install = self.build_content_text("  Install as portable software.");
+                let launch_after_install = self.build_content_text("  Launch after installation.");
+
+                ui.label("");
+                ui.checkbox(&mut self.create_desktop_shortcut, desktop_shortcut);
+                ui.end_row();
+
+                ui.label("");
+                if self.desktop_path.is_none() {
+                    ui.label("(Unable to fetch desktop path.)");
+                } else {
+                    ui.label(format!("({})", self.desktop_path.as_ref().unwrap()));
+                }
+                ui.end_row();
+                ui.end_row();
+
+                ui.label("");
+                ui.checkbox(&mut self.create_start_menu_shortcut, start_menu_shortcut);
+                ui.end_row();
+
+                ui.label("");
+                if self.start_menu_path.is_none() {
+                    ui.label("(Unable to fetch start menu path.)");
+                } else {
+                    ui.label(format!("({})", self.start_menu_path.as_ref().unwrap()));
+                }
+                ui.end_row();
+                ui.end_row();
+
+                ui.label("");
+                ui.checkbox(&mut self.install_as_portable, portable_install);
+                ui.end_row();
+                ui.end_row();
+
+                ui.label("");
+                ui.checkbox(&mut self.launch_after_install, launch_after_install);
+                ui.end_row();
+                ui.end_row();
+            });
+    }
+
+    fn draw_body_installation(&mut self, ui: &mut Ui) {
+        ui.vertical(|ui| {
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.label(egui::RichText::new("    Installing ...").size(self.tip_text_font_size));
+                ui.add(
+                    egui::ProgressBar::new(self.install_progress)
+                        .animate(false)
+                        .show_percentage()
+                        .desired_width(460.0),
+                );
+            });
+            ui.end_row();
+        });
+    }
+
+    fn draw_body_finished(&mut self, ui: &mut Ui) {
+        ui.vertical(|ui| {
+            ui.label(self.build_content_text("    "));
+            ui.label(
+                self.build_content_text("    KitX Dashboard had been installed successfully."),
+            );
+            if self.launch_after_install {
+                ui.label(
+                    self.build_content_text("    It will be launched after this window closed."),
+                );
+            } else {
+                ui.label(self.build_content_text("    You can launch it now!"));
+            }
+            ui.label(self.build_content_text("    "));
         });
     }
 }
 
 impl eframe::App for AppData {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.init();
+
         // if _frame.info().window_info.maximized {
         //     _frame.set_window_size(egui::vec2(800.0, 500.0));
         // }
