@@ -6,6 +6,7 @@
 use crate::data::{data_fetcher, data_validator};
 
 use super::{
+    install_config::InstallConfig,
     reg_helper,
     translations::{self, get_lang, Languages},
 };
@@ -47,14 +48,7 @@ pub struct AppData {
     license_content: Option<String>,
     can_goto_install_config_step: bool,
     can_goto_install_step: bool,
-    installation_path: String,
-    create_desktop_shortcut: bool,
-    create_start_menu_shortcut: bool,
-    install_as_portable: bool,
-    launch_after_install: bool,
-    desktop_path: Option<String>,
-    start_menu_path: Option<String>,
-    install_progress: f32,
+    install_config: InstallConfig,
 }
 
 impl Default for AppData {
@@ -81,14 +75,7 @@ impl Default for AppData {
             license_content: None,
             can_goto_install_config_step: false,
             can_goto_install_step: false,
-            installation_path: "C:\\Program Files\\Crequency\\KitX\\".to_string(),
-            create_desktop_shortcut: false,
-            create_start_menu_shortcut: true,
-            install_as_portable: false,
-            launch_after_install: true,
-            desktop_path: None,
-            start_menu_path: None,
-            install_progress: 0.0,
+            install_config: InstallConfig::default(),
         }
     }
 }
@@ -100,14 +87,17 @@ impl AppData {
             self.frame_index = 0;
         }
 
-        if self.desktop_path == None {
-            self.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
-            println!("Desktop directory: {:?}", self.desktop_path);
+        if self.install_config.desktop_path == None {
+            self.install_config.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
+            println!("Desktop directory: {:?}", self.install_config.desktop_path);
         }
 
-        if self.start_menu_path == None {
-            self.start_menu_path = Some(reg_helper::get_start_menu_path().unwrap());
-            println!("Start menu directory: {:?}", self.start_menu_path);
+        if self.install_config.start_menu_path == None {
+            self.install_config.start_menu_path = Some(reg_helper::get_start_menu_path().unwrap());
+            println!(
+                "Start menu directory: {:?}",
+                self.install_config.start_menu_path
+            );
         }
 
         if self.license_content == None {
@@ -126,7 +116,7 @@ impl AppData {
     fn validater(&mut self) {
         self.can_goto_install_config_step = self.license_agreed;
 
-        if data_validator::is_path_legal_in_windows(&self.installation_path) {
+        if data_validator::is_path_legal_in_windows(&self.install_config.installation_path) {
             self.can_goto_install_step = true;
         } else {
             self.can_goto_install_step = false;
@@ -372,7 +362,7 @@ impl AppData {
                 ui.label(self.build_content_text(&get_lang("2_install_path", &self.lang)));
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.add(
-                        egui::TextEdit::singleline(&mut self.installation_path)
+                        egui::TextEdit::singleline(&mut self.install_config.installation_path)
                             .hint_text("C:\\Program Files\\Crequency\\KitX"),
                     );
                     if ui.button("...").clicked() {}
@@ -399,38 +389,56 @@ impl AppData {
                     self.build_content_text(&get_lang("2_launch_after_install", &self.lang));
 
                 ui.label("");
-                ui.checkbox(&mut self.create_desktop_shortcut, desktop_shortcut);
+                ui.checkbox(
+                    &mut self.install_config.create_desktop_shortcut,
+                    desktop_shortcut,
+                );
                 ui.end_row();
 
                 ui.label("");
-                if self.desktop_path.is_none() {
+                if self.install_config.desktop_path.is_none() {
                     ui.label(get_lang("2_fetch_desktop_path_failed", &self.lang));
                 } else {
-                    ui.label(format!("({})", self.desktop_path.as_ref().unwrap()));
+                    ui.label(format!(
+                        "({})",
+                        self.install_config.desktop_path.as_ref().unwrap()
+                    ));
                 }
                 ui.end_row();
                 ui.end_row();
 
                 ui.label("");
-                ui.checkbox(&mut self.create_start_menu_shortcut, start_menu_shortcut);
+                ui.checkbox(
+                    &mut self.install_config.create_start_menu_shortcut,
+                    start_menu_shortcut,
+                );
                 ui.end_row();
 
                 ui.label("");
-                if self.start_menu_path.is_none() {
+                if self.install_config.start_menu_path.is_none() {
                     ui.label(get_lang("2_fetch_start_menu_path_failed", &self.lang));
                 } else {
-                    ui.label(format!("({})", self.start_menu_path.as_ref().unwrap()));
+                    ui.label(format!(
+                        "({})",
+                        self.install_config.start_menu_path.as_ref().unwrap()
+                    ));
                 }
                 ui.end_row();
                 ui.end_row();
 
                 ui.label("");
-                ui.checkbox(&mut self.install_as_portable, portable_install);
+                ui.checkbox(
+                    &mut self.install_config.install_as_portable,
+                    portable_install,
+                );
                 ui.end_row();
                 ui.end_row();
 
                 ui.label("");
-                ui.checkbox(&mut self.launch_after_install, launch_after_install);
+                ui.checkbox(
+                    &mut self.install_config.launch_after_install,
+                    launch_after_install,
+                );
                 ui.end_row();
                 ui.end_row();
             });
@@ -444,7 +452,7 @@ impl AppData {
                         .size(self.tip_text_font_size),
                 );
                 ui.add(
-                    egui::ProgressBar::new(self.install_progress)
+                    egui::ProgressBar::new(self.install_config.install_progress)
                         .animate(false)
                         .show_percentage()
                         .desired_width(460.0),
@@ -458,7 +466,7 @@ impl AppData {
         ui.vertical(|ui| {
             ui.label(self.build_content_text("    "));
             ui.label(self.build_content_text(&get_lang("4_installed", &self.lang)));
-            if self.launch_after_install {
+            if self.install_config.launch_after_install {
                 ui.label(self.build_content_text(&get_lang("4_auto_launch", &self.lang)));
             } else {
                 ui.label(self.build_content_text(&get_lang("4_manually_launch", &self.lang)));
