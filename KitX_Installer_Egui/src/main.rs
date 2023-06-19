@@ -8,7 +8,7 @@ mod app_info;
 use arguments::Arguments;
 use std::env;
 
-use crate::app_info::{RunMode, AppInfo};
+use crate::app_info::{AppInfo, RunMode};
 use crate::platforms::windows::application;
 
 fn main() {

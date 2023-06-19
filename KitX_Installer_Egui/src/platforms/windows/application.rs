@@ -5,7 +5,10 @@
 
 use crate::data::{data_fetcher, data_validator};
 
-use super::reg_helper;
+use super::{
+    reg_helper,
+    translations::{self, get_lang},
+};
 
 pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
     let size = size.unwrap_or(egui::vec2(800.0, 500.0));
@@ -28,6 +31,8 @@ pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
 pub struct AppData {
     frame_index: i32,
     frame_per_second: i32,
+    lang: translations::Languages,
+    lang_selected: bool,
     steps: i32,
     max_steps_count: i32,
     heading_text_font_size: f32,
@@ -57,6 +62,8 @@ impl Default for AppData {
         Self {
             frame_index: 0,
             frame_per_second: 60,
+            lang: translations::Languages::English,
+            lang_selected: false,
             steps: 0,
             max_steps_count: 5,
             heading_text_font_size: 28.0,
@@ -93,6 +100,8 @@ impl AppData {
             self.frame_index = 0;
         }
 
+        if self.lang_selected == false {}
+
         if self.desktop_path == None {
             self.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
             println!("Desktop directory: {:?}", self.desktop_path);
@@ -114,6 +123,10 @@ impl AppData {
                     Some(data_fetcher::fetch_string(self.license_url.to_string()));
             }
         }
+    }
+
+    fn change_lang(&mut self, lang: translations::Languages) {
+        self.lang = lang;
     }
 
     fn validater(&mut self) {
@@ -149,15 +162,15 @@ impl AppData {
             // .width_range(80.0..=200.0)
             .show_inside(ui, |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.heading(self.build_heading_text("Steps"));
+                    ui.heading(self.build_heading_text(&get_lang("steps", &self.lang)));
                     ui.label("");
                     ui.separator();
                     ui.label("");
                 });
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    let mut catalog_painter = |step: i32, tip: String| {
-                        if self.steps > step {
-                            let finished = self.build_catalog_text(&tip);
+                    let mut catalog_painter = |me: &mut AppData, step: i32, tip: String| {
+                        if me.steps > step {
+                            let finished = me.build_catalog_text(&tip);
                             ui.label(finished.color(
                                 if _frame.info().system_theme.unwrap() == eframe::Theme::Light {
                                     Color32::DARK_GREEN
@@ -165,8 +178,8 @@ impl AppData {
                                     Color32::LIGHT_GREEN
                                 },
                             ));
-                        } else if self.steps == step {
-                            let executing = self.build_catalog_text(&tip);
+                        } else if me.steps == step {
+                            let executing = me.build_catalog_text(&tip);
                             ui.label(executing.color(
                                 if _frame.info().system_theme.unwrap() == eframe::Theme::Light {
                                     Color32::DARK_BLUE
@@ -175,16 +188,16 @@ impl AppData {
                                 },
                             ));
                         } else {
-                            ui.label(self.build_catalog_text(&tip));
+                            ui.label(me.build_catalog_text(&tip));
                         }
                         ui.end_row();
                         ui.label("");
                     };
-                    catalog_painter(0, "0. Hello".to_string());
-                    catalog_painter(1, "1. License".to_string());
-                    catalog_painter(2, "2. Installation Config".to_string());
-                    catalog_painter(3, "3. Installing".to_string());
-                    catalog_painter(4, "4. Finished".to_string());
+                    catalog_painter(self, 0, get_lang("0_hello", &self.lang));
+                    catalog_painter(self, 1, get_lang("1_license", &self.lang));
+                    catalog_painter(self, 2, get_lang("2_install_config", &self.lang));
+                    catalog_painter(self, 3, get_lang("3_install", &self.lang));
+                    catalog_painter(self, 4, get_lang("4_finish", &self.lang));
                 });
             });
     }
@@ -196,11 +209,11 @@ impl AppData {
             .default_height(40.0)
             .show_inside(ui, |ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let previous = self.build_button_text("< Previous");
-                    let next = self.build_button_text("Next >");
-                    let install = self.build_button_text("Install");
-                    let cancle = self.build_button_text("Cancle");
-                    let finish = self.build_button_text("Finish");
+                    let previous = self.build_button_text(&get_lang("previous", &self.lang));
+                    let next = self.build_button_text(&get_lang("next", &self.lang));
+                    let install = self.build_button_text(&get_lang("install", &self.lang));
+                    let cancle = self.build_button_text(&get_lang("cancel", &self.lang));
+                    let finish = self.build_button_text(&get_lang("finish", &self.lang));
 
                     if self.steps < 2 {
                         if self.steps == 0 || self.can_goto_install_config_step {
@@ -249,7 +262,7 @@ impl AppData {
 
     fn draw_body(&mut self, ui: &mut Ui) {
         ui.vertical_centered(|ui| {
-            ui.heading(self.build_heading_text("KitX Installer"));
+            ui.heading(self.build_heading_text(&get_lang("kitx_installer", &self.lang)));
             ui.label("");
 
             if self.steps == 0 {
@@ -268,21 +281,27 @@ impl AppData {
 
     fn draw_body_hello(&mut self, ui: &mut Ui) {
         ui.with_layout(egui::Layout::top_down(egui::Align::TOP), |ui| {
-            ui.label(self.build_content_text("    Welcome to KitX Project! You are running the KitX Installer."));
-            ui.label(self.build_content_text("    This installer will install KitX Dashboard into your device."));
+            ui.label(self.build_content_text(&get_lang("0_intro", &self.lang)));
+            ui.label(self.build_content_text(&get_lang("0_install_on_your_device", &self.lang)));
             ui.label("    ");
-            ui.label(self.build_content_text("    This is a online installer, you need to connect to the internet."));
-            ui.label(self.build_content_text("    We are not responsible for the traffic charges incurred during the installation process."));
+            ui.label(self.build_content_text(&get_lang("0_connect_internet", &self.lang)));
+            ui.label(self.build_content_text(&get_lang("0_traffic_charges", &self.lang)));
             ui.label("    ");
             ui.horizontal_wrapped(|ui| {
-                ui.label(self.build_content_text("    You can fetch all source code via"));
-                ui.hyperlink_to(self.build_content_text("Github"), "https://github.com/Crequency/KitX");
+                ui.label(self.build_content_text(&get_lang("0_fetch_src_codes", &self.lang)));
+                ui.hyperlink_to(
+                    self.build_content_text(&get_lang("github", &self.lang)),
+                    "https://github.com/Crequency/KitX",
+                );
                 ui.label(self.build_content_text("."));
             });
             ui.horizontal_wrapped(|ui| {
-                ui.label(self.build_content_text("    Visit our"));
-                ui.hyperlink_to(self.build_content_text("Home Page"), "https://kitx.apps.catrol.cn");
-                ui.label(self.build_content_text("for more."));
+                ui.label(self.build_content_text(&get_lang("0_visit_home_page", &self.lang)));
+                ui.hyperlink_to(
+                    self.build_content_text(&get_lang("home_page", &self.lang)),
+                    "https://kitx.apps.catrol.cn",
+                );
+                ui.label(self.build_content_text(&get_lang("0_for_more", &self.lang)));
             });
         });
     }
@@ -292,7 +311,7 @@ impl AppData {
             let license_content = self
                 .license_content
                 .clone()
-                .unwrap_or("Fetching ...".to_string())
+                .unwrap_or(get_lang("fetching", &self.lang))
                 .to_string();
             let license_content_lines = license_content.split('\n');
 
@@ -318,8 +337,7 @@ impl AppData {
         ui.add_space(10.0);
 
         ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-            let agreement =
-                self.build_content_text("  I agree to the terms of the license agreement.");
+            let agreement = self.build_content_text(&get_lang("1_agree", &self.lang));
 
             ui.label("    ");
             ui.checkbox(&mut self.license_agreed, agreement);
@@ -334,7 +352,7 @@ impl AppData {
             .striped(false)
             .show(ui, |ui| {
                 ui.label("");
-                ui.label(self.build_content_text("Installation path: "));
+                ui.label(self.build_content_text(&get_lang("2_install_path", &self.lang)));
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.add(
                         egui::TextEdit::singleline(&mut self.installation_path)
@@ -354,10 +372,14 @@ impl AppData {
             // .spacing([40.0, 4.0])
             .striped(false)
             .show(ui, |ui| {
-                let desktop_shortcut = self.build_content_text("  Create desktop shortcut.");
-                let start_menu_shortcut = self.build_content_text("  Create start menu shortcut.");
-                let portable_install = self.build_content_text("  Install as portable software.");
-                let launch_after_install = self.build_content_text("  Launch after installation.");
+                let desktop_shortcut =
+                    self.build_content_text(&get_lang("2_create_desktop_shortcut", &self.lang));
+                let start_menu_shortcut =
+                    self.build_content_text(&get_lang("2_create_start_menu_shortcut", &self.lang));
+                let portable_install =
+                    self.build_content_text(&get_lang("2_install_as_portable_mode", &self.lang));
+                let launch_after_install =
+                    self.build_content_text(&get_lang("2_launch_after_install", &self.lang));
 
                 ui.label("");
                 ui.checkbox(&mut self.create_desktop_shortcut, desktop_shortcut);
@@ -365,7 +387,7 @@ impl AppData {
 
                 ui.label("");
                 if self.desktop_path.is_none() {
-                    ui.label("(Unable to fetch desktop path.)");
+                    ui.label(get_lang("2_fetch_desktop_path_failed", &self.lang));
                 } else {
                     ui.label(format!("({})", self.desktop_path.as_ref().unwrap()));
                 }
@@ -378,7 +400,7 @@ impl AppData {
 
                 ui.label("");
                 if self.start_menu_path.is_none() {
-                    ui.label("(Unable to fetch start menu path.)");
+                    ui.label(get_lang("2_fetch_start_menu_path_failed", &self.lang));
                 } else {
                     ui.label(format!("({})", self.start_menu_path.as_ref().unwrap()));
                 }
@@ -400,7 +422,10 @@ impl AppData {
     fn draw_body_installation(&mut self, ui: &mut Ui) {
         ui.vertical(|ui| {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                ui.label(egui::RichText::new("    Installing ...").size(self.tip_text_font_size));
+                ui.label(
+                    egui::RichText::new(get_lang("3_installing", &self.lang))
+                        .size(self.tip_text_font_size),
+                );
                 ui.add(
                     egui::ProgressBar::new(self.install_progress)
                         .animate(false)
@@ -415,15 +440,11 @@ impl AppData {
     fn draw_body_finished(&mut self, ui: &mut Ui) {
         ui.vertical(|ui| {
             ui.label(self.build_content_text("    "));
-            ui.label(
-                self.build_content_text("    KitX Dashboard had been installed successfully."),
-            );
+            ui.label(self.build_content_text(&get_lang("4_installed", &self.lang)));
             if self.launch_after_install {
-                ui.label(
-                    self.build_content_text("    It will be launched after this window closed."),
-                );
+                ui.label(self.build_content_text(&get_lang("4_auto_launch", &self.lang)));
             } else {
-                ui.label(self.build_content_text("    You can launch it now!"));
+                ui.label(self.build_content_text(&get_lang("4_manually_launch", &self.lang)));
             }
             ui.label(self.build_content_text("    "));
         });
