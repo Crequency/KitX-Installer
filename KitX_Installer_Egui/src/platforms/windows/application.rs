@@ -114,14 +114,13 @@ impl AppData {
 
         if self.license_content == None {
             if self.license_url_tried {
-                self.license_content = Some(data_fetcher::fetch_string(
-                    self.license_url_backup.to_string(),
-                ));
+                println!("Fetching license content from {}", self.license_url_backup);
+                self.license_content =
+                    data_fetcher::fetch_string(self.license_url_backup.to_string());
             } else {
                 self.license_url_tried = true;
-                self.license_content =
-                    Some(data_fetcher::fetch_string(self.license_url.to_string()));
-            }
+                println!("Fetching license content from {}", self.license_url);
+                self.license_content = data_fetcher::fetch_string(self.license_url.to_string());
         }
     }
 

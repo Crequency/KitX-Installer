@@ -5,6 +5,11 @@ pub async fn fetch_string_async(url: String) -> String {
     resp.await.unwrap().text().await.unwrap()
 }
 
-pub fn fetch_string(url: String) -> String {
-    reqwest::blocking::get(url).unwrap().text().unwrap()
+pub fn fetch_string(url: String) -> Option<String> {
+    let response = reqwest::blocking::get(url);
+    if response.is_err() {
+        None
+    } else {
+        Some(response.unwrap().text().unwrap())
+    }
 }
