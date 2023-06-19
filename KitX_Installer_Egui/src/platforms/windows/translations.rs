@@ -1,4 +1,5 @@
-﻿pub enum Languages {
+﻿#[derive(Debug, PartialEq)]
+pub enum Languages {
     English = 1,
     Chinese = 2,
 }

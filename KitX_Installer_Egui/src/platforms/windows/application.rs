@@ -7,7 +7,7 @@ use crate::data::{data_fetcher, data_validator};
 
 use super::{
     reg_helper,
-    translations::{self, get_lang},
+    translations::{self, get_lang, Languages},
 };
 
 pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
@@ -31,7 +31,7 @@ pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
 pub struct AppData {
     frame_index: i32,
     frame_per_second: i32,
-    lang: translations::Languages,
+    lang: Languages,
     lang_selected: bool,
     steps: i32,
     max_steps_count: i32,
@@ -100,8 +100,6 @@ impl AppData {
             self.frame_index = 0;
         }
 
-        if self.lang_selected == false {}
-
         if self.desktop_path == None {
             self.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
             println!("Desktop directory: {:?}", self.desktop_path);
@@ -121,11 +119,8 @@ impl AppData {
                 self.license_url_tried = true;
                 println!("Fetching license content from {}", self.license_url);
                 self.license_content = data_fetcher::fetch_string(self.license_url.to_string());
+            }
         }
-    }
-
-    fn change_lang(&mut self, lang: translations::Languages) {
-        self.lang = lang;
     }
 
     fn validater(&mut self) {
@@ -152,6 +147,29 @@ impl AppData {
 
     fn build_button_text(&mut self, text: &str) -> RichText {
         RichText::new(text).size(self.basic_button_font_size)
+    }
+
+    fn draw_lang_selection(&mut self, ui: &mut Ui) {
+        ui.label("");
+        ui.heading(self.build_heading_text("    Select language: "));
+        ui.label("");
+
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::LEFT), |ui| {
+            ui.label(self.build_content_text("     "));
+
+            egui::ComboBox::from_label("")
+                .selected_text(self.build_content_text(&format!("{:?}", self.lang)))
+                .show_ui(ui, |ui| {
+                    ui.style_mut().wrap = Some(false);
+                    ui.set_min_width(60.0);
+                    ui.selectable_value(&mut self.lang, Languages::English, "English");
+                    ui.selectable_value(&mut self.lang, Languages::Chinese, "简体中文");
+                });
+
+            if ui.button(self.build_content_text("OK")).clicked() {
+                self.lang_selected = true;
+            }
+        });
     }
 
     fn draw_steps(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
@@ -460,11 +478,15 @@ impl eframe::App for AppData {
         // _frame.set_window_size(get_native_options(None).initial_window_size.unwrap_or(egui::vec2(800.0, 500.0)));
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.draw_steps(ui, _frame);
-            self.draw_bottom_panel(ui, _frame);
-            self.draw_body(ui);
+            if self.lang_selected {
+                self.draw_steps(ui, _frame);
+                self.draw_bottom_panel(ui, _frame);
+                self.draw_body(ui);
 
-            self.validater();
+                self.validater();
+            } else {
+                self.draw_lang_selection(ui);
+            }
         });
     }
 }
