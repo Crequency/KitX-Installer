@@ -179,7 +179,7 @@ impl AppData {
                         if me.steps > step {
                             let finished = me.build_catalog_text(&tip);
                             ui.label(finished.color(
-                                if _frame.info().system_theme.unwrap() == eframe::Theme::Light {
+                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark) == eframe::Theme::Light {
                                     Color32::DARK_GREEN
                                 } else {
                                     Color32::LIGHT_GREEN
@@ -188,7 +188,7 @@ impl AppData {
                         } else if me.steps == step {
                             let executing = me.build_catalog_text(&tip);
                             ui.label(executing.color(
-                                if _frame.info().system_theme.unwrap() == eframe::Theme::Light {
+                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark) == eframe::Theme::Light {
                                     Color32::DARK_BLUE
                                 } else {
                                     Color32::LIGHT_BLUE
