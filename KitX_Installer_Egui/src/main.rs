@@ -79,7 +79,7 @@ fn process_args(args: Arguments) -> Option<AppInfo> {
     });
 }
 
-fn run_gui(app_info: AppInfo) -> Result<(), eframe::Error> {
+fn run_gui(_app_info: AppInfo) -> Result<(), eframe::Error> {
     let options = application::get_native_options(None);
 
     eframe::run_native(

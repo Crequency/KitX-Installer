@@ -5,6 +5,8 @@
 
 use crate::data::{data_fetcher, data_validator};
 
+use crate::platforms::download_config::DownloadConfig;
+
 use super::{
     install_config::InstallConfig,
     reg_helper,
@@ -49,6 +51,7 @@ pub struct AppData {
     can_goto_install_config_step: bool,
     can_goto_install_step: bool,
     install_config: InstallConfig,
+    download_config: DownloadConfig,
 }
 
 impl Default for AppData {
@@ -76,6 +79,7 @@ impl Default for AppData {
             can_goto_install_config_step: false,
             can_goto_install_step: false,
             install_config: InstallConfig::default(),
+            download_config: DownloadConfig::default(),
         }
     }
 }
@@ -179,7 +183,9 @@ impl AppData {
                         if me.steps > step {
                             let finished = me.build_catalog_text(&tip);
                             ui.label(finished.color(
-                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark) == eframe::Theme::Light {
+                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark)
+                                    == eframe::Theme::Light
+                                {
                                     Color32::DARK_GREEN
                                 } else {
                                     Color32::LIGHT_GREEN
@@ -188,7 +194,9 @@ impl AppData {
                         } else if me.steps == step {
                             let executing = me.build_catalog_text(&tip);
                             ui.label(executing.color(
-                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark) == eframe::Theme::Light {
+                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark)
+                                    == eframe::Theme::Light
+                                {
                                     Color32::DARK_BLUE
                                 } else {
                                     Color32::LIGHT_BLUE
