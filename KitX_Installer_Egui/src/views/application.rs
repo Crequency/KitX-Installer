@@ -3,15 +3,11 @@
     epaint::{Color32, Vec2},
 };
 
-use crate::data::{data_fetcher, data_validator};
-
-use crate::platforms::download_config::DownloadConfig;
-
-use super::{
-    install_config::InstallConfig,
-    reg_helper,
-    translations::{self, get_lang, Languages},
+use crate::data::{
+    data_fetcher, data_validator, download_config::DownloadConfig, install_config::InstallConfig,
 };
+
+use super::translations::{self, get_lang, Languages};
 
 pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
     let size = size.unwrap_or(egui::vec2(800.0, 500.0));
@@ -91,17 +87,8 @@ impl AppData {
             self.frame_index = 0;
         }
 
-        if self.install_config.desktop_path == None {
-            self.install_config.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
-            println!("Desktop directory: {:?}", self.install_config.desktop_path);
-        }
-
-        if self.install_config.start_menu_path == None {
-            self.install_config.start_menu_path = Some(reg_helper::get_start_menu_path().unwrap());
-            println!(
-                "Start menu directory: {:?}",
-                self.install_config.start_menu_path
-            );
+        if cfg!(target_os = "windows") {
+            self.install_config.windows_config.init();
         }
 
         if self.license_content == None {
@@ -398,18 +385,22 @@ impl AppData {
 
                 ui.label("");
                 ui.checkbox(
-                    &mut self.install_config.create_desktop_shortcut,
+                    &mut self.install_config.windows_config.create_desktop_shortcut,
                     desktop_shortcut,
                 );
                 ui.end_row();
 
                 ui.label("");
-                if self.install_config.desktop_path.is_none() {
+                if self.install_config.windows_config.desktop_path.is_none() {
                     ui.label(get_lang("2_fetch_desktop_path_failed", &self.lang));
                 } else {
                     ui.label(format!(
                         "({})",
-                        self.install_config.desktop_path.as_ref().unwrap()
+                        self.install_config
+                            .windows_config
+                            .desktop_path
+                            .as_ref()
+                            .unwrap()
                     ));
                 }
                 ui.end_row();
@@ -417,22 +408,31 @@ impl AppData {
 
                 ui.label("");
                 ui.checkbox(
-                    &mut self.install_config.create_start_menu_shortcut,
+                    &mut self
+                        .install_config
+                        .windows_config
+                        .create_start_menu_shortcut,
                     start_menu_shortcut,
                 );
                 ui.end_row();
 
-                ui.label("");
-                if self.install_config.start_menu_path.is_none() {
-                    ui.label(get_lang("2_fetch_start_menu_path_failed", &self.lang));
-                } else {
-                    ui.label(format!(
-                        "({})",
-                        self.install_config.start_menu_path.as_ref().unwrap()
-                    ));
+                if cfg!(target_os = "windows") {
+                    ui.label("");
+                    if self.install_config.windows_config.start_menu_path.is_none() {
+                        ui.label(get_lang("2_fetch_start_menu_path_failed", &self.lang));
+                    } else {
+                        ui.label(format!(
+                            "({})",
+                            self.install_config
+                                .windows_config
+                                .start_menu_path
+                                .as_ref()
+                                .unwrap()
+                        ));
+                    }
+                    ui.end_row();
+                    ui.end_row();
                 }
-                ui.end_row();
-                ui.end_row();
 
                 ui.label("");
                 ui.checkbox(

@@ -1,25 +1,31 @@
-﻿pub struct InstallConfig {
-    pub installation_path: String,
+﻿use super::reg_helper;
+
+pub struct WindowsInstallConfig {
     pub create_desktop_shortcut: bool,
     pub create_start_menu_shortcut: bool,
-    pub install_as_portable: bool,
-    pub launch_after_install: bool,
     pub desktop_path: Option<String>,
     pub start_menu_path: Option<String>,
-    pub install_progress: f32,
 }
 
-impl InstallConfig {
-    pub fn default() -> InstallConfig {
-        InstallConfig {
-            installation_path: "C:\\Program Files\\Crequency\\KitX\\".to_string(),
+impl WindowsInstallConfig {
+    pub fn default() -> WindowsInstallConfig {
+        WindowsInstallConfig {
             create_desktop_shortcut: false,
             create_start_menu_shortcut: true,
-            install_as_portable: false,
-            launch_after_install: true,
             desktop_path: None,
             start_menu_path: None,
-            install_progress: 0.0,
+        }
+    }
+
+    pub fn init(&mut self) {
+        if self.desktop_path == None {
+            self.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
+            println!("Desktop directory: {:?}", self.desktop_path);
+        }
+
+        if self.start_menu_path == None {
+            self.start_menu_path = Some(reg_helper::get_start_menu_path().unwrap());
+            println!("Start menu directory: {:?}", self.start_menu_path);
         }
     }
 }
