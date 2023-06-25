@@ -411,17 +411,17 @@ impl AppData {
                 ui.end_row();
                 ui.end_row();
 
-                ui.label("");
-                ui.checkbox(
-                    &mut self
-                        .install_config
-                        .windows_config
-                        .create_start_menu_shortcut,
-                    start_menu_shortcut,
-                );
-                ui.end_row();
-
                 if cfg!(target_os = "windows") {
+                    ui.label("");
+                    ui.checkbox(
+                        &mut self
+                            .install_config
+                            .windows_config
+                            .create_start_menu_shortcut,
+                        start_menu_shortcut,
+                    );
+                    ui.end_row();
+
                     ui.label("");
                     if self.install_config.windows_config.start_menu_path.is_none() {
                         ui.label(get_lang("2_fetch_start_menu_path_failed", &self.lang));
