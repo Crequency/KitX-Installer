@@ -28,6 +28,7 @@ pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
 }
 
 pub struct AppData {
+    init: bool,
     frame_index: i32,
     frame_per_second: i32,
     lang: Languages,
@@ -53,6 +54,7 @@ pub struct AppData {
 impl Default for AppData {
     fn default() -> Self {
         Self {
+            init: false,
             frame_index: 0,
             frame_per_second: 60,
             lang: translations::Languages::English,
@@ -82,9 +84,8 @@ impl Default for AppData {
 
 impl AppData {
     fn init(&mut self) {
-        self.frame_index = self.frame_index + 1;
-        if self.frame_index >= self.frame_per_second {
-            self.frame_index = 0;
+        if self.init {
+            return;
         }
 
         if cfg!(target_os = "windows") {
@@ -102,6 +103,10 @@ impl AppData {
                 self.license_content = data_fetcher::fetch_string(self.license_url.to_string());
             }
         }
+
+        self.init = true;
+
+        println!("Application init, launching ...");
     }
 
     fn validater(&mut self) {
@@ -488,21 +493,28 @@ impl eframe::App for AppData {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.init();
 
+        self.frame_index = self.frame_index + 1;
+        if self.frame_index >= self.frame_per_second {
+            self.frame_index = 0;
+        }
+
         // if _frame.info().window_info.maximized {
         //     _frame.set_window_size(egui::vec2(800.0, 500.0));
         // }
         // _frame.set_window_size(get_native_options(None).initial_window_size.unwrap_or(egui::vec2(800.0, 500.0)));
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            if self.lang_selected {
-                self.draw_steps(ui, _frame);
-                self.draw_bottom_panel(ui, _frame);
-                self.draw_body(ui);
+        if self.init {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                if self.lang_selected {
+                    self.draw_steps(ui, _frame);
+                    self.draw_bottom_panel(ui, _frame);
+                    self.draw_body(ui);
 
-                self.validater();
-            } else {
-                self.draw_lang_selection(ui);
-            }
-        });
+                    self.validater();
+                } else {
+                    self.draw_lang_selection(ui);
+                }
+            });
+        }
     }
 }
