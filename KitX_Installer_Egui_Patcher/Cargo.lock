@@ -3,5 +3,23 @@
 version = 3
 
 [[package]]
+name = "arguments"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d8b6590432235ca848cccae06397e642a4e984b37c546dc1b0dcb056b9dcd23"
+dependencies = [
+ "options",
+]
+
+[[package]]
 name = "kitx_installer_egui_patcher"
 version = "0.1.0"
+dependencies = [
+ "arguments",
+]
+
+[[package]]
+name = "options"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61a1c9b12c453182754f3126c5689324c7214265de2df79917b59de87547a916"
