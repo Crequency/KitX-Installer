@@ -92,5 +92,5 @@ fn run_gui(_app_info: AppInfo) -> Result<(), eframe::Error> {
 
 fn run_cli(app_info: AppInfo) {
     println!("KitX Installer CLI");
-    println!("v{}", app_info.version);
+    println!("Version: v{}", app_info.version);
 }
