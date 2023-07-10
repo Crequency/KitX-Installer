@@ -1,7 +1,6 @@
 mod app_info;
 mod patch_info;
 mod patch_task;
-mod utils;
 
 use std::env;
 use std::fs::File;
@@ -40,6 +39,7 @@ fn main() {
             .get::<String>("to")
             .unwrap_or("".to_string())
             .into_bytes(),
+        alignment: args.get::<bool>("align").unwrap_or(true),
     });
 
     println!("File to patch: {:?}", patch_info.patch_file_path);
@@ -60,44 +60,58 @@ fn main() {
     println!("File loaded into RAM with size: {} bytes\n", buffer.len());
 
     for task in patch_info.patch_tasks {
-        println!(
-            "Patching {} bytes to {} bytes:",
-            task.patch_source.len(),
-            task.patch_target.len()
-        );
-        println!("  - Source: {:X?}", task.patch_source);
-        println!("  - Target: {:X?}", task.patch_target);
-
         let mut new_file_buffer = Vec::new();
         let mut patched = false;
+        let mut matched = false;
+        let source = task.patch_source.clone();
+        let mut target = task.patch_target.clone();
+
+        if task.alignment {
+            for _i in 0..(source.len() - target.len()) {
+                target.push(" ".as_bytes()[0]);
+            }
+        }
+
+        println!("Patching {} bytes to {} bytes:", source.len(), target.len());
+        println!("  - Source: {:X?}", source);
+        println!("  - Target: {:X?}", target);
+
+        if task.alignment {
+            println!(
+                "  - Target is aligned to source, origin target length is {} bytes.",
+                task.patch_target.len()
+            );
+        }
 
         for i in 0..buffer.len() {
-            if buffer[i] == task.patch_source[0] {
+            if buffer[i] == source[0] {
                 let mut found = true;
 
-                for j in 0..task.patch_source.len() {
-                    if buffer[i + j] != task.patch_source[j] {
+                for j in 0..source.len() {
+                    if buffer[i + j] != source[j] {
                         found = false;
                         break;
                     }
                 }
 
                 if found {
+                    matched = found;
+
                     println!("  - Found at index: {}", i);
 
                     for j in 0..i {
                         new_file_buffer.push(buffer[j]);
                     }
 
-                    for j in 0..task.patch_target.len() {
-                        new_file_buffer.push(task.patch_target[j]);
+                    for j in 0..target.len() {
+                        new_file_buffer.push(target[j]);
                     }
 
-                    for j in i + task.patch_source.len()..buffer.len() {
+                    for j in i + source.len()..buffer.len() {
                         new_file_buffer.push(buffer[j]);
                     }
 
-                    println!("  - Patched !");
+                    println!("  - New file composed in RAM !");
 
                     // println!("  - Origin: {:X?}", buffer);
                     // println!("  - Result: {:X?}", new_file_buffer);
@@ -114,8 +128,18 @@ fn main() {
             }
         }
 
-        if !patched {
-            println!("  - Not found ! Patching failed .");
+        if !matched {
+            println!("  - Pattern not found .");
+        }
+
+        if patched {
+            println!("  - Patched !");
+        } else {
+            println!("  - Patching failed .");
         }
     }
+
+    println!();
+    println!("All patching tasks done !");
+    println!("Enjoy :)");
 }
