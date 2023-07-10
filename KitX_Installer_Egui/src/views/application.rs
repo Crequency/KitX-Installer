@@ -1,6 +1,6 @@
 ﻿use eframe::{
     egui::{self, RichText, Ui},
-    epaint::{Color32, Vec2},
+    epaint::{text::*, Color32, Vec2},
 };
 
 use crate::data::{
@@ -487,6 +487,23 @@ impl AppData {
             ui.label(self.build_content_text("    "));
         });
     }
+
+    // fn change_font(&mut self, ctx: &egui::Context) {
+    //     //Custom font install
+    //     // # use epaint::text::*;
+    //     // 1. Create a `FontDefinitions` object.
+    //     let mut font = FontDefinitions::default();
+    //     // Install my own font (maybe supporting non-latin characters):
+    //     // 2. register the font content with a name.
+    //     font.font_data.insert("mPlus".to_owned(),std::borrow::Cow::Borrowed(include_bytes!("../fonts/rounded-x-mplus-1p-bold.ttf")));
+    //     //font.font_data.insert("mPlus".to_string(), Cow::from(&mPlus_font[..]));
+    //     // 3. Set two font families to use the font, font's name must have been
+    //     // Put new font first (highest priority)registered in `font_data`.
+    //     font.fonts_for_family.get_mut(&FontFamily::Monospace).unwrap().insert(0, "mPlus".to_owned());
+    //     font.fonts_for_family.get_mut(&FontFamily::Proportional).unwrap().insert(0, "mPlus".to_owned());
+    //     // 4. Configure context with modified `FontDefinitions`.
+    //     ctx.set_fonts(font);
+    // }
 }
 
 impl eframe::App for AppData {

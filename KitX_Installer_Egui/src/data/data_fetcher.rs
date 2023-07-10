@@ -1,6 +1,6 @@
 ﻿extern crate reqwest;
 
-pub async fn fetch_string_async(url: String) -> String {
+pub async fn _fetch_string_async(url: String) -> String {
     let resp = reqwest::get(url);
     resp.await.unwrap().text().await.unwrap()
 }
@@ -12,4 +12,8 @@ pub fn fetch_string(url: String) -> Option<String> {
     } else {
         Some(response.unwrap().text().unwrap())
     }
+}
+
+pub fn _fetch_binary(_url: String) {
+    // TODO: implement this
 }
