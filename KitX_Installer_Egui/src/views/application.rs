@@ -1,6 +1,6 @@
 ﻿use eframe::{
     egui::{self, RichText, Ui},
-    epaint::{text::*, Color32, Vec2},
+    epaint::{Color32, Vec2},
 };
 
 use crate::data::{
@@ -452,6 +452,22 @@ impl AppData {
                     &mut self.install_config.launch_after_install,
                     launch_after_install,
                 );
+                ui.end_row();
+                ui.end_row();
+
+                ui.label("");
+                ui.label(format!(
+                    "Installing version: {}",
+                    self.download_config.version
+                ));
+                ui.end_row();
+                ui.end_row();
+
+                ui.label("");
+                ui.label(format!(
+                    "Installing profile: {}",
+                    self.download_config.profile
+                ));
                 ui.end_row();
                 ui.end_row();
             });
