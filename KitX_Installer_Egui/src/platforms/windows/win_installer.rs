@@ -35,6 +35,7 @@ pub fn install(
         let mut current_progress = 0.0;
 
         // Check if installation is canceled and return true if it is.
+        // Return the value of `is_canceled`.
         let mut check_cancel = move || {
             if !is_canceled {
                 if cancel.try_recv().is_ok() {
@@ -74,25 +75,29 @@ pub fn install(
             thread::sleep(Duration::from_millis(100));
         }
 
-        // Emulate installation cancellation progress.
+        // If installation is canceled, uninstall and return.
         if check_cancel() {
-            println!("Cancelling installation...");
-
-            let cp = (report_progress(-1.0) * 100.0) as i32;
-
-            for i in 0..cp {
-                report_progress(0.01 * ((cp - i) as f32));
-                thread::sleep(Duration::from_millis(100));
-            }
-
-            // Remember to set progress to 0.0 when installation cancellation progress is done.
-            report_progress(0.0);
-
-            println!("Installation cancelled.");
-
+            uninstall(config_clone, &mut report_progress.clone());
             return;
         }
 
         println!("Installation complete.");
     });
+}
+
+fn uninstall<F: FnMut(f32) -> f32>(config: InstallConfig, report_progress: &mut F) {
+    println!("Cancelling installation...");
+
+    let current_progress = (report_progress(-1.0) * 100.0) as i32;
+
+    // Emulate installation cancellation progress.
+    for i in 0..current_progress {
+        report_progress(0.01 * ((current_progress - i) as f32));
+        thread::sleep(Duration::from_millis(100));
+    }
+
+    // Remember to set progress to 0.0 when installation cancellation progress is done.
+    report_progress(0.0);
+
+    println!("Installation cancelled.");
 }
