@@ -303,6 +303,9 @@ impl AppData {
                             self.steps = self.steps - 1;
                             self.install_config.installation_canceled = false;
                             self.install_config.installation_cancel_requested = false;
+                        } else if self.install_config.install_progress == 1.0 {
+                            // If installation finished, we can go to next step
+                            self.steps = self.steps + 1;
                         }
 
                         // If haven't requested cancellation, we draw the cancel button
