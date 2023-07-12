@@ -71,6 +71,7 @@ pub fn install(
             }
         };
 
+        println!();
         report_detail("> Installing...");
 
         if !check_cancel() {
@@ -199,39 +200,39 @@ fn uninstall<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
     let installation_progress = (report_progress(-1.0) * 100.0) as i32;
 
     if installation_progress >= 100 {
-        report_detail("Installation had been completed. You can't cancel it now.");
+        report_detail("! Installation had been completed. You can't cancel it now.");
         return;
     }
 
     // Delete related registry keys (including app info, file association info, uninstall info).
     if installation_progress >= 90 && installation_progress < 100 {
-        report_detail("Deleting registry keys...");
+        report_detail("┌ Deleting registry keys...");
 
         thread::sleep(Duration::from_millis(100));
 
-        report_detail("Registry keys deleted.");
+        report_detail("└ Registry keys deleted.");
 
         report_progress(0.85);
     }
 
     // Delete shortcuts.
     if installation_progress >= 85 {
-        report_detail("Deleting shortcuts...");
+        report_detail("┌ Deleting shortcuts...");
 
         thread::sleep(Duration::from_millis(100));
 
-        report_detail("Shortcuts deleted.");
+        report_detail("└ Shortcuts deleted.");
 
         report_progress(0.80);
     }
 
     // Delete installation files.
     if installation_progress >= 80 {
-        report_detail("Deleting installation files...");
+        report_detail("┌ Deleting installation files...");
 
         thread::sleep(Duration::from_millis(1000));
 
-        report_detail("Installation files deleted.");
+        report_detail("└ Installation files deleted.");
 
         report_progress(0.0);
     }

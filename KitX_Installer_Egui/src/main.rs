@@ -80,17 +80,32 @@ fn process_args(args: Arguments) -> Option<AppInfo> {
     });
 }
 
-fn run_gui(_app_info: AppInfo) -> Result<(), eframe::Error> {
+fn run_gui(app_info: AppInfo) -> Result<(), eframe::Error> {
+    println!("KitX Installer GUI");
+    println!("Version: v{}", app_info.version);
+    println!();
+
     let options = application::get_native_options(None);
 
-    eframe::run_native(
+    let result = eframe::run_native(
         "KitX Installer",
         options,
         Box::new(|_cc| Box::<application::AppData>::default()),
-    )
+    );
+
+    println!();
+    println!("GUI exited.");
+    println!("KitX Installer GUI exited.");
+
+    result
 }
 
 fn run_cli(app_info: AppInfo) {
     println!("KitX Installer CLI");
     println!("Version: v{}", app_info.version);
+    println!();
+
+    println!();
+    println!("CLI exited.");
+    println!("KitX Installer CLI exited.");
 }

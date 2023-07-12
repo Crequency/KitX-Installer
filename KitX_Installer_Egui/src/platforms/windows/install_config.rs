@@ -20,12 +20,12 @@ impl WindowsInstallConfig {
     pub fn init(&mut self) {
         if self.desktop_path == None {
             self.desktop_path = Some(reg_helper::get_desktop_path().unwrap());
-            println!("Desktop directory: {:?}", self.desktop_path);
+            println!("# Desktop directory: {:?}", self.desktop_path);
         }
 
         if self.start_menu_path == None {
             self.start_menu_path = Some(reg_helper::get_start_menu_path().unwrap());
-            println!("Start menu directory: {:?}", self.start_menu_path);
+            println!("# Start menu directory: {:?}", self.start_menu_path);
         }
     }
 }

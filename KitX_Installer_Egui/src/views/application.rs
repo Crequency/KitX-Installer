@@ -106,14 +106,17 @@ impl AppData {
             if self.license_url_tried {
                 if self.license_url_backup_tried {
                     let tip =
-                        "Fetching license content failed, please check your network connection.";
+                        "# Fetching license content failed, please check your network connection.";
 
                     println!("{}", tip);
 
                     self.license_content = Some(tip.to_string());
                     self.license_content_fetched = false;
                 } else {
-                    println!("Fetching license content from {}", self.license_url_backup);
+                    println!(
+                        "# Fetching license content from {}",
+                        self.license_url_backup
+                    );
 
                     self.license_url_backup_tried = true;
                     self.license_content =
@@ -122,7 +125,7 @@ impl AppData {
                     self.license_content_fetched = true;
                 }
             } else {
-                println!("Fetching license content from {}", self.license_url);
+                println!("# Fetching license content from {}", self.license_url);
 
                 self.license_url_tried = true;
                 self.license_content =
@@ -135,7 +138,8 @@ impl AppData {
         self.init = true && self.license_content != None;
 
         if self.init {
-            println!("Application init, launching ...");
+            println!("# Application init, launching GUI ...");
+            println!();
         }
     }
 
@@ -184,6 +188,8 @@ impl AppData {
 
             if ui.button(self.build_content_text("OK")).clicked() {
                 self.lang_selected = true;
+
+                println!("^ User selected language: {:?}", self.lang);
             }
         });
     }
@@ -603,11 +609,6 @@ impl eframe::App for AppData {
         if self.frame_index >= self.frame_per_second {
             self.frame_index = 0;
         }
-
-        // if _frame.info().window_info.maximized {
-        //     _frame.set_window_size(egui::vec2(800.0, 500.0));
-        // }
-        // _frame.set_window_size(get_native_options(None).initial_window_size.unwrap_or(egui::vec2(800.0, 500.0)));
 
         if self.init {
             egui::CentralPanel::default().show(ctx, |ui| {
