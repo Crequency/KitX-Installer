@@ -54,50 +54,190 @@ pub fn install(
             }
             current_progress = value;
             if progress.send(value).is_err() {
-                println!("Failed to send progress.");
+                println!("! Failed to send progress.");
             } else {
                 if cfg!(debug_assertions) {
-                    println!("Updated progress: {}%", current_progress * 100.0);
+                    println!("> Updated progress: {}%", current_progress * 100.0);
                 }
             }
             current_progress
         };
 
-        println!("Installing...");
-
-        // Emulate installation progress.
-        for i in 0..100 {
-            if check_cancel() {
-                break;
+        // Report installation details to main thread though details channel.
+        let report_detail = move |content: &str| {
+            println!("{}", content);
+            if details.send(content.to_string()).is_err() {
+                println!("! Failed to send detail.");
             }
+        };
 
-            report_progress(0.01 * (i + 1) as f32);
+        report_detail("> Installing...");
+
+        if !check_cancel() {
+            // Download installation files.
+
+            report_detail("┌ Downloading installation files ...");
+
+            thread::sleep(Duration::from_millis(2000));
+
+            report_detail("└ Installation files downloaded.");
+
+            report_progress(0.50);
+        }
+
+        if !check_cancel() {
+            // Extract installation files.
+
+            report_detail("┌ Extracting installation files ...");
+
+            thread::sleep(Duration::from_millis(500));
+
+            report_detail("└ Installation files extracted.");
+
+            report_progress(0.65);
+        }
+
+        if !check_cancel() {
+            // Move installation files to installation path.
+
+            report_detail("┌ Moving installation files to installation path ...");
+
+            thread::sleep(Duration::from_millis(300));
+
+            report_detail("└ Installation files moved to installation path.");
+
+            report_progress(0.80);
+        }
+
+        if !check_cancel() {
+            // Update access permissions of installation path.
+
+            report_detail("┌ Updating installation path permissions ...");
+
             thread::sleep(Duration::from_millis(100));
+
+            report_detail("└ Installation path permissions updated.");
+
+            report_progress(0.85);
+        }
+
+        if !check_cancel() {
+            // Create desktop shortcut and start menu shortcut.
+
+            report_detail("┌ Creating shortcuts ...");
+
+            thread::sleep(Duration::from_millis(100));
+
+            report_detail("└ Shortcuts created.");
+
+            report_progress(0.90);
+        }
+
+        if !check_cancel() {
+            // Insert application info to registry.
+
+            report_detail("┌ Inserting application info to registry ...");
+
+            thread::sleep(Duration::from_millis(100));
+
+            report_detail("└ Application info inserted to registry.");
+
+            report_progress(0.95);
+        }
+
+        if !check_cancel() {
+            // Insert file association info to registry.
+
+            report_detail("┌ Inserting file association info to registry ...");
+
+            thread::sleep(Duration::from_millis(100));
+
+            report_detail("└ File association info inserted to registry.");
+
+            report_progress(0.975);
+        }
+
+        if !check_cancel() {
+            // Insert uninstall info to registry and create uninstaller.
+
+            report_detail("┌ Inserting uninstall info to registry ...");
+
+            thread::sleep(Duration::from_millis(100));
+
+            report_detail("└ Uninstall info inserted to registry.");
+
+            report_detail("┌ Creating uninstaller program ...");
+
+            thread::sleep(Duration::from_millis(3000));
+
+            report_detail("└ Uninstaller program created.");
+
+            report_progress(1.00);
         }
 
         // If installation is canceled, uninstall and return.
         if check_cancel() {
-            uninstall(config_clone, &mut report_progress.clone());
+            uninstall(
+                config_clone,
+                &mut report_progress.clone(),
+                report_detail.clone(),
+            );
             return;
         }
 
-        println!("Installation complete.");
+        report_detail("> Installation complete.");
     });
 }
 
-fn uninstall<F: FnMut(f32) -> f32>(config: InstallConfig, report_progress: &mut F) {
-    println!("Cancelling installation...");
+fn uninstall<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
+    config: InstallConfig,
+    report_progress: &mut RP,
+    report_detail: RD,
+) {
+    report_detail("> Cancelling installation...");
 
-    let current_progress = (report_progress(-1.0) * 100.0) as i32;
+    let installation_progress = (report_progress(-1.0) * 100.0) as i32;
 
-    // Emulate installation cancellation progress.
-    for i in 0..current_progress {
-        report_progress(0.01 * ((current_progress - i) as f32));
+    if installation_progress >= 100 {
+        report_detail("Installation had been completed. You can't cancel it now.");
+        return;
+    }
+
+    // Delete related registry keys (including app info, file association info, uninstall info).
+    if installation_progress >= 90 && installation_progress < 100 {
+        report_detail("Deleting registry keys...");
+
         thread::sleep(Duration::from_millis(100));
+
+        report_detail("Registry keys deleted.");
+
+        report_progress(0.85);
+    }
+
+    // Delete shortcuts.
+    if installation_progress >= 85 {
+        report_detail("Deleting shortcuts...");
+
+        thread::sleep(Duration::from_millis(100));
+
+        report_detail("Shortcuts deleted.");
+
+        report_progress(0.80);
+    }
+
+    // Delete installation files.
+    if installation_progress >= 80 {
+        report_detail("Deleting installation files...");
+
+        thread::sleep(Duration::from_millis(1000));
+
+        report_detail("Installation files deleted.");
+
+        report_progress(0.0);
     }
 
     // Remember to set progress to 0.0 when installation cancellation progress is done.
     report_progress(0.0);
 
-    println!("Installation cancelled.");
+    report_detail("> Installation cancelled.");
 }
