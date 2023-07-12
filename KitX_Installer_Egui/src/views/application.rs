@@ -1,10 +1,16 @@
-﻿use eframe::{
+﻿use std::sync::mpsc;
+
+use eframe::{
     egui::{self, RichText, Ui},
     epaint::{Color32, Vec2},
 };
 
-use crate::data::{
-    data_fetcher, data_validator, download_config::DownloadConfig, install_config::InstallConfig,
+use crate::{
+    data::{
+        data_fetcher, data_validator, download_config::DownloadConfig,
+        install_config::InstallConfig,
+    },
+    platforms::windows::win_installer,
 };
 
 use super::translations::{self, get_lang, Languages};
@@ -107,10 +113,10 @@ impl AppData {
                     self.license_content = Some(tip.to_string());
                     self.license_content_fetched = false;
                 } else {
-                println!("Fetching license content from {}", self.license_url_backup);
+                    println!("Fetching license content from {}", self.license_url_backup);
 
                     self.license_url_backup_tried = true;
-                self.license_content =
+                    self.license_content =
                         data_fetcher::fetch_string(self.license_url_backup.to_string(), 3 * 1000);
 
                     self.license_content_fetched = true;
@@ -129,8 +135,8 @@ impl AppData {
         self.init = true && self.license_content != None;
 
         if self.init {
-        println!("Application init, launching ...");
-    }
+            println!("Application init, launching ...");
+        }
     }
 
     fn validater(&mut self) {
@@ -266,6 +272,12 @@ impl AppData {
                         if self.can_goto_install_step {
                             if ui.button(install).clicked() {
                                 self.steps = self.steps + 1;
+
+                                let (tx, rx) = mpsc::channel();
+
+                                self.install_config.progress_channel_receiver = Some(rx);
+
+                                win_installer::install(&self.install_config, tx);
                             }
                         }
                         if ui.button(previous).clicked() {
@@ -278,7 +290,7 @@ impl AppData {
                             self.steps = self.steps - 1;
                         }
                         if cfg!(debug_assertions) {
-                            if ui.button("debug: next").clicked() {
+                            if ui.button(self.build_button_text("debug: next")).clicked() {
                                 self.steps = self.steps + 1;
                             }
                         }
@@ -339,32 +351,32 @@ impl AppData {
 
     fn draw_body_license(&mut self, ui: &mut Ui) {
         if self.license_content_fetched {
-        ui.vertical_centered(|ui| {
-            let license_content = self
-                .license_content
-                .clone()
-                .unwrap_or(get_lang("fetching", &self.lang))
-                .to_string();
-            let license_content_lines = license_content.split('\n');
+            ui.vertical_centered(|ui| {
+                let license_content = self
+                    .license_content
+                    .clone()
+                    .unwrap_or(get_lang("fetching", &self.lang))
+                    .to_string();
+                let license_content_lines = license_content.split('\n');
 
-            let text_style = egui::TextStyle::Body;
-            let row_height = ui.text_style_height(&text_style);
-            egui::ScrollArea::vertical()
-                .auto_shrink([false; 2])
-                .show_rows(
-                    ui,
-                    row_height,
-                    license_content_lines.clone().count(),
-                    |ui, row_range| {
-                        for row in row_range {
-                            ui.label(self.build_content_text(
-                                license_content_lines.clone().nth(row).unwrap(),
-                            ));
-                        }
-                    },
-                );
-            ui.end_row();
-        });
+                let text_style = egui::TextStyle::Body;
+                let row_height = ui.text_style_height(&text_style);
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false; 2])
+                    .show_rows(
+                        ui,
+                        row_height,
+                        license_content_lines.clone().count(),
+                        |ui, row_range| {
+                            for row in row_range {
+                                ui.label(self.build_content_text(
+                                    license_content_lines.clone().nth(row).unwrap(),
+                                ));
+                            }
+                        },
+                    );
+                ui.end_row();
+            });
         } else {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                 ui.label("    ");
@@ -512,8 +524,11 @@ impl AppData {
     }
 
     fn draw_body_installation(&mut self, ui: &mut Ui) {
+        self.install_config.update_progress();
+
         ui.vertical(|ui| {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.label("    ");
                 ui.label(
                     egui::RichText::new(get_lang("3_installing", &self.lang))
                         .size(self.tip_text_font_size),
@@ -522,7 +537,7 @@ impl AppData {
                     egui::ProgressBar::new(self.install_config.install_progress)
                         .animate(false)
                         .show_percentage()
-                        .desired_width(460.0),
+                        .desired_width(ui.available_width() - 30.0),
                 );
             });
             ui.end_row();
@@ -541,23 +556,6 @@ impl AppData {
             ui.label(self.build_content_text("    "));
         });
     }
-
-    // fn change_font(&mut self, ctx: &egui::Context) {
-    //     //Custom font install
-    //     // # use epaint::text::*;
-    //     // 1. Create a `FontDefinitions` object.
-    //     let mut font = FontDefinitions::default();
-    //     // Install my own font (maybe supporting non-latin characters):
-    //     // 2. register the font content with a name.
-    //     font.font_data.insert("mPlus".to_owned(),std::borrow::Cow::Borrowed(include_bytes!("../fonts/rounded-x-mplus-1p-bold.ttf")));
-    //     //font.font_data.insert("mPlus".to_string(), Cow::from(&mPlus_font[..]));
-    //     // 3. Set two font families to use the font, font's name must have been
-    //     // Put new font first (highest priority)registered in `font_data`.
-    //     font.fonts_for_family.get_mut(&FontFamily::Monospace).unwrap().insert(0, "mPlus".to_owned());
-    //     font.fonts_for_family.get_mut(&FontFamily::Proportional).unwrap().insert(0, "mPlus".to_owned());
-    //     // 4. Configure context with modified `FontDefinitions`.
-    //     ctx.set_fonts(font);
-    // }
 }
 
 impl eframe::App for AppData {
