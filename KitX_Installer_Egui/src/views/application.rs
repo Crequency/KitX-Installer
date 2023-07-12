@@ -44,7 +44,9 @@ pub struct AppData {
     license_url: String,
     license_url_tried: bool,
     license_url_backup: String,
+    license_url_backup_tried: bool,
     license_content: Option<String>,
+    license_content_fetched: bool,
     can_goto_install_config_step: bool,
     can_goto_install_step: bool,
     install_config: InstallConfig,
@@ -73,7 +75,9 @@ impl Default for AppData {
             license_url_backup:
                 "https://ghproxy.com/raw.githubusercontent.com/Crequency/KitX/main/LICENSE"
                     .to_string(),
+            license_url_backup_tried: false,
             license_content: None,
+            license_content_fetched: false,
             can_goto_install_config_step: false,
             can_goto_install_step: false,
             install_config: InstallConfig::default(),
@@ -94,21 +98,39 @@ impl AppData {
 
         if self.license_content == None {
             if self.license_url_tried {
+                if self.license_url_backup_tried {
+                    let tip =
+                        "Fetching license content failed, please check your network connection.";
+
+                    println!("{}", tip);
+
+                    self.license_content = Some(tip.to_string());
+                    self.license_content_fetched = false;
+                } else {
                 println!("Fetching license content from {}", self.license_url_backup);
+
+                    self.license_url_backup_tried = true;
                 self.license_content =
                         data_fetcher::fetch_string(self.license_url_backup.to_string(), 3 * 1000);
+
+                    self.license_content_fetched = true;
+                }
             } else {
-                self.license_url_tried = true;
                 println!("Fetching license content from {}", self.license_url);
-                self.license_content = data_fetcher::fetch_string(self.license_url.to_string());
+
+                self.license_url_tried = true;
                 self.license_content =
                     data_fetcher::fetch_string(self.license_url.to_string(), 3 * 1000);
+
+                self.license_content_fetched = true;
             }
         }
 
-        self.init = true;
+        self.init = true && self.license_content != None;
 
+        if self.init {
         println!("Application init, launching ...");
+    }
     }
 
     fn validater(&mut self) {
@@ -316,6 +338,7 @@ impl AppData {
     }
 
     fn draw_body_license(&mut self, ui: &mut Ui) {
+        if self.license_content_fetched {
         ui.vertical_centered(|ui| {
             let license_content = self
                 .license_content
@@ -342,6 +365,19 @@ impl AppData {
                 );
             ui.end_row();
         });
+        } else {
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.label("    ");
+                ui.label(self.build_content_text(self.license_content.clone().unwrap().as_str()));
+            });
+
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.label("    ");
+                ui.label(self.build_content_text("Visit "));
+                ui.hyperlink_to(self.build_content_text("LICENSE"), self.license_url.clone());
+                ui.label(self.build_content_text(" to read the full license file."));
+            });
+        }
 
         ui.add_space(10.0);
 
