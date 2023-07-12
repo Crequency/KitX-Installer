@@ -273,11 +273,20 @@ impl AppData {
                             if ui.button(install).clicked() {
                                 self.steps = self.steps + 1;
 
-                                let (tx, rx) = mpsc::channel();
+                                // Progress Channel
+                                let (ps, pr) = mpsc::channel();
 
-                                self.install_config.progress_channel_receiver = Some(rx);
+                                // Details Channel
+                                let (ds, dr) = mpsc::channel();
 
-                                win_installer::install(&self.install_config, tx);
+                                // Cancel Channel
+                                let (cs, cr) = mpsc::channel();
+
+                                self.install_config.progress_channel_receiver = Some(pr);
+                                self.install_config.install_details_channel_receiver = Some(dr);
+                                self.install_config.cancle_channel_sender = Some(cs);
+
+                                win_installer::install(&self.install_config, ps, ds, cr);
                             }
                         }
                         if ui.button(previous).clicked() {
@@ -286,8 +295,33 @@ impl AppData {
                             }
                         }
                     } else if self.steps == 3 {
-                        if ui.button(cancle).clicked() {
+                        // If cancellation requested and progress reset to 0.0, then cancel success
+                        // So we can back to previous step and reset related data
+                        if self.install_config.install_progress == 0.0
+                            && self.install_config.installation_cancel_requested
+                        {
                             self.steps = self.steps - 1;
+                            self.install_config.installation_canceled = false;
+                            self.install_config.installation_cancel_requested = false;
+                        }
+
+                        // If haven't requested cancellation, we draw the cancel button
+                        if !self.install_config.installation_cancel_requested {
+                            if ui.button(cancle).clicked() {
+                                if self.install_config.cancle_channel_sender.is_some() {
+                                    // When sending error, it means the receiver has been dropped
+                                    // So we can assume the cancellation has been finished
+                                    self.install_config.installation_canceled = self
+                                        .install_config
+                                        .cancle_channel_sender
+                                        .as_ref()
+                                        .unwrap()
+                                        .send(1)
+                                        .is_err();
+
+                                    self.install_config.installation_cancel_requested = true;
+                                }
+                            }
                         }
                         if cfg!(debug_assertions) {
                             if ui.button(self.build_button_text("debug: next")).clicked() {

@@ -9,6 +9,10 @@ pub struct InstallConfig {
     pub install_progress: f32,
     pub windows_config: WindowsInstallConfig,
     pub progress_channel_receiver: Option<mpsc::Receiver<f32>>,
+    pub install_details_channel_receiver: Option<mpsc::Receiver<String>>,
+    pub cancle_channel_sender: Option<mpsc::Sender<i32>>,
+    pub installation_canceled: bool,
+    pub installation_cancel_requested: bool,
 }
 
 impl InstallConfig {
@@ -26,6 +30,10 @@ impl InstallConfig {
             install_progress: 0.0,
             windows_config: WindowsInstallConfig::default(),
             progress_channel_receiver: None,
+            install_details_channel_receiver: None,
+            cancle_channel_sender: None,
+            installation_canceled: false,
+            installation_cancel_requested: false,
         }
     }
 
