@@ -12,6 +12,7 @@ use std::env;
 use crate::app_info::{AppInfo, RunMode};
 use crate::views::application;
 
+// Entry point of this program.
 fn main() {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
@@ -39,6 +40,7 @@ fn main() {
     }
 }
 
+// Process arguments and return `AppInfo` if success.
 fn process_args(args: Arguments) -> Option<AppInfo> {
     // `clia` means `command line interface argument`
     let mut clia_run_gui = args.get::<bool>("run-gui");
@@ -80,6 +82,7 @@ fn process_args(args: Arguments) -> Option<AppInfo> {
     });
 }
 
+// Run in GUI mode.
 fn run_gui(app_info: AppInfo) -> Result<(), eframe::Error> {
     println!("KitX Installer GUI");
     println!("Version: v{}", app_info.version);
@@ -100,6 +103,7 @@ fn run_gui(app_info: AppInfo) -> Result<(), eframe::Error> {
     result
 }
 
+// Run in CLI mode.
 fn run_cli(app_info: AppInfo) {
     println!("KitX Installer CLI");
     println!("Version: v{}", app_info.version);

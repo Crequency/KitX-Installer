@@ -15,6 +15,7 @@ use crate::{
 
 use super::translations::{self, get_lang, Languages};
 
+// Get native options for the application.
 pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
     let size = size.unwrap_or(egui::vec2(800.0, 500.0));
     let mut min_size = size.clone();
