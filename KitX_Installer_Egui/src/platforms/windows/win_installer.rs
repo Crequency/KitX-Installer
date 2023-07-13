@@ -178,7 +178,7 @@ pub fn install(
 
         // If installation is canceled, uninstall and return.
         if check_cancel() {
-            uninstall(
+            cancel_installation(
                 config_clone,
                 &mut report_progress.clone(),
                 report_detail.clone(),
@@ -190,7 +190,7 @@ pub fn install(
     });
 }
 
-fn uninstall<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
+fn cancel_installation<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
     config: InstallConfig,
     report_progress: &mut RP,
     report_detail: RD,
