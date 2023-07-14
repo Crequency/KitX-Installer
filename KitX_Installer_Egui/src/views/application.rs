@@ -256,10 +256,12 @@ impl AppData {
                     let previous = self.build_button_text(&get_lang("previous", &self.lang));
                     let next = self.build_button_text(&get_lang("next", &self.lang));
                     let install = self.build_button_text(&get_lang("install", &self.lang));
-                    let cancle = self.build_button_text(&get_lang("cancel", &self.lang));
+                    let cancel = self.build_button_text(&get_lang("cancel", &self.lang));
                     let finish = self.build_button_text(&get_lang("finish", &self.lang));
 
                     if self.steps < 2 {
+                        // In [Hello], [License] pages
+
                         if self.steps == 0 || self.can_goto_install_config_step {
                             if ui.button(next).clicked() {
                                 if self.steps < self.max_steps_count - 1 {
@@ -276,6 +278,8 @@ impl AppData {
                             }
                         }
                     } else if self.steps == 2 {
+                        // In [Install Config] page
+
                         if self.can_goto_install_step {
                             if ui.button(install).clicked() {
                                 self.steps = self.steps + 1;
@@ -302,6 +306,8 @@ impl AppData {
                             }
                         }
                     } else if self.steps == 3 {
+                        // In [Install] page
+
                         // If cancellation requested and progress reset to 0.0, then cancel success
                         // So we can back to previous step and reset related data
                         if self.install_config.install_progress == 0.0
@@ -316,8 +322,11 @@ impl AppData {
                         }
 
                         // If haven't requested cancellation, we draw the cancel button
-                        if !self.install_config.installation_cancel_requested {
-                            if ui.button(cancle).clicked() {
+                        // Otherwise, we draw the disabled cancel button
+                        ui.add_enabled_ui(
+                            !self.install_config.installation_cancel_requested,
+                            |ui| {
+                                if ui.button(cancel).clicked() {
                                 if self.install_config.cancle_channel_sender.is_some() {
                                     // When sending error, it means the receiver has been dropped
                                     // So we can assume the cancellation has been finished
@@ -332,13 +341,17 @@ impl AppData {
                                     self.install_config.installation_cancel_requested = true;
                                 }
                             }
-                        }
+                            },
+                        );
+
                         if cfg!(debug_assertions) {
                             if ui.button(self.build_button_text("debug: next")).clicked() {
                                 self.steps = self.steps + 1;
                             }
                         }
                     } else {
+                        // In [Finish] page
+
                         if ui.button(finish).clicked() {
                             _frame.close();
                         }
