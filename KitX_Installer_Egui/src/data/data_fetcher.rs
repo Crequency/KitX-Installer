@@ -22,6 +22,7 @@ pub fn fetch_string(url: String, time_out_milliseconds: i32) -> Option<String> {
     }
 }
 
-pub fn _fetch_binary(_url: String) {
-    // TODO: implement this
+pub fn fetch_binary(_url: String) -> Vec<u8> {
+    let response = reqwest::blocking::get(_url).unwrap();
+    response.bytes().unwrap().to_vec()
 }

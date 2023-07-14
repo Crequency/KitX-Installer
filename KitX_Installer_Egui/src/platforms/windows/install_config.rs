@@ -29,3 +29,14 @@ impl WindowsInstallConfig {
         }
     }
 }
+
+impl Clone for WindowsInstallConfig {
+    fn clone(&self) -> Self {
+        WindowsInstallConfig {
+            create_desktop_shortcut: self.create_desktop_shortcut,
+            create_start_menu_shortcut: self.create_start_menu_shortcut,
+            desktop_path: self.desktop_path.clone(),
+            start_menu_path: self.start_menu_path.clone(),
+        }
+    }
+}

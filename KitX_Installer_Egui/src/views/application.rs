@@ -297,7 +297,13 @@ impl AppData {
                                 self.install_config.install_details_channel_receiver = Some(dr);
                                 self.install_config.cancle_channel_sender = Some(cs);
 
-                                win_installer::install(&self.install_config, ps, ds, cr);
+                                win_installer::install(
+                                    &self.install_config,
+                                    &self.download_config,
+                                    ps,
+                                    ds,
+                                    cr,
+                                );
                             }
                         }
                         if ui.button(previous).clicked() {

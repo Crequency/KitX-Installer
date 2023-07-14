@@ -10,6 +10,7 @@ pub struct InstallConfig {
     pub windows_config: WindowsInstallConfig,
     pub progress_channel_receiver: Option<mpsc::Receiver<f32>>,
     pub install_details_channel_receiver: Option<mpsc::Receiver<String>>,
+    pub install_details: Vec<String>,
     pub cancle_channel_sender: Option<mpsc::Sender<i32>>,
     pub installation_canceled: bool,
     pub installation_cancel_requested: bool,
@@ -31,6 +32,7 @@ impl InstallConfig {
             windows_config: WindowsInstallConfig::default(),
             progress_channel_receiver: None,
             install_details_channel_receiver: None,
+            install_details: Vec::new(),
             cancle_channel_sender: None,
             installation_canceled: false,
             installation_cancel_requested: false,
@@ -47,5 +49,41 @@ impl InstallConfig {
             Ok(progress) => progress,
             Err(_) => self.install_progress,
         };
+    }
+
+    pub fn receive_details(&mut self) {
+        if self.install_details_channel_receiver.is_none() {
+            return;
+        }
+
+        let details = self
+            .install_details_channel_receiver
+            .as_ref()
+            .unwrap()
+            .try_recv();
+        match details {
+            Ok(details) => {
+                self.install_details.push(details);
+            }
+            Err(_) => {}
+        };
+    }
+}
+
+impl Clone for InstallConfig {
+    fn clone(&self) -> Self {
+        InstallConfig {
+            installation_path: self.installation_path.clone(),
+            install_as_portable: self.install_as_portable,
+            launch_after_install: self.launch_after_install,
+            install_progress: self.install_progress,
+            windows_config: self.windows_config.clone(),
+            progress_channel_receiver: None,
+            install_details_channel_receiver: None,
+            install_details: self.install_details.clone(),
+            cancle_channel_sender: self.cancle_channel_sender.clone(),
+            installation_canceled: self.installation_canceled,
+            installation_cancel_requested: self.installation_cancel_requested,
+        }
     }
 }

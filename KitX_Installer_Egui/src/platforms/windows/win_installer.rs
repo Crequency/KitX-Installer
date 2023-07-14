@@ -1,34 +1,21 @@
-﻿use std::sync::mpsc;
+﻿use std::fs::create_dir_all;
+use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
+use crate::data::data_fetcher;
+use crate::data::download_config::DownloadConfig;
 use crate::data::install_config::InstallConfig;
 
-use super::install_config::WindowsInstallConfig;
-
 pub fn install(
-    config: &InstallConfig,
+    i_config: &InstallConfig,
+    d_config: &DownloadConfig,
     progress: mpsc::Sender<f32>,
     details: mpsc::Sender<String>,
     cancel: mpsc::Receiver<i32>,
 ) {
-    let config_clone = InstallConfig {
-        installation_path: config.installation_path.clone(),
-        install_as_portable: config.install_as_portable,
-        launch_after_install: config.launch_after_install,
-        install_progress: config.install_progress,
-        windows_config: WindowsInstallConfig {
-            create_desktop_shortcut: config.windows_config.create_desktop_shortcut,
-            create_start_menu_shortcut: config.windows_config.create_start_menu_shortcut,
-            desktop_path: config.windows_config.desktop_path.clone(),
-            start_menu_path: config.windows_config.start_menu_path.clone(),
-        },
-        progress_channel_receiver: None,
-        install_details_channel_receiver: None,
-        cancle_channel_sender: None,
-        installation_canceled: false,
-        installation_cancel_requested: false,
-    };
+    let ic_config = i_config.clone();
+    let dc_config = d_config.clone();
 
     let _handle = thread::spawn(move || {
         let mut is_canceled = false;
@@ -79,7 +66,30 @@ pub fn install(
 
             report_detail("┌ Downloading installation files ...");
 
-            thread::sleep(Duration::from_millis(2000));
+            // Create installation path.
+            report_detail(
+                format!(
+                    "├ Creating installation path `{}` ...",
+                    ic_config.installation_path.clone()
+                )
+                .as_str(),
+            );
+            if create_dir_all(ic_config.installation_path.clone()).is_err() {
+                report_detail("! Failed to create installation path, quiting ...");
+                // TODO: Cancel installation.
+            }
+
+            // Get download url from download config.
+            let download_url = dc_config.get_full_url("github.com");
+            report_detail(
+                format!(
+                    "├ Downloading installation files from `{}` ...",
+                    download_url
+                )
+                .as_str(),
+            );
+            let _bytes = data_fetcher::fetch_binary(download_url);
+            report_detail(format!("├ Downloaded {} bytes.", _bytes.len()).as_str());
 
             report_detail("└ Installation files downloaded.");
 
@@ -179,7 +189,7 @@ pub fn install(
         // If installation is canceled, uninstall and return.
         if check_cancel() {
             cancel_installation(
-                config_clone,
+                ic_config,
                 &mut report_progress.clone(),
                 report_detail.clone(),
             );

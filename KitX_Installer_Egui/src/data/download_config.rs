@@ -12,22 +12,41 @@ pub struct DownloadConfig {
     pub version: String,
     pub profile: String,
     pub hosts: Vec<Host>,
+    pub is_profile_auto_detect: bool,
 }
 
 impl DownloadConfig {
+    fn init(&mut self) {
+        if !self.profile_patched() {
+            self.profile = get_profile();
+            self.is_profile_auto_detect = true;
+        }
+    }
+
     pub fn default() -> DownloadConfig {
-        DownloadConfig {
+        let mut result = DownloadConfig {
             version: get_default_version_str(),
             profile: get_default_profile_str(),
             hosts: vec![
                 Host{
-                    host_key: "github".to_string(),
+                    host_key: "github.com".to_string(),
                     host_url: "https://github.com/Crequency/KitX/releases/download/<version>/kitx-<profile>.7z".to_string(),
                     host_latest_url: "https://github.com/Crequency/KitX/releases/latest/download/kitx-<profile>.7z".to_string(),
                     host_descr: "GitHub Releases - Crequency/KitX".to_string(),
                 },
+                Host{
+                    host_key: "catrol.cn".to_string(),
+                    host_url: "https://dl.catrol.cn/kitx/<version>/kitx-<profile>.7z".to_string(),
+                    host_latest_url: "https://dl.catrol.cn/kitx/latest/kitx-<profile>.7z".to_string(),
+                    host_descr: "Crequency Download Site - KitX Releases Host".to_string(),
+                }
             ],
-        }
+            is_profile_auto_detect: false,
+        };
+
+        result.init();
+
+        result
     }
 
     pub fn version_patched(&self) -> bool {
@@ -36,6 +55,10 @@ impl DownloadConfig {
 
     pub fn profile_patched(&self) -> bool {
         self.profile != get_default_profile_str()
+    }
+
+    pub fn all_patched(&self) -> bool {
+        self.version_patched() && self.profile_patched()
     }
 
     pub fn get_full_url(&self, host_key: &str) -> String {
@@ -66,5 +89,16 @@ impl DownloadConfig {
         }
 
         host_url
+    }
+}
+
+impl Clone for DownloadConfig {
+    fn clone(&self) -> Self {
+        DownloadConfig {
+            version: self.version.clone(),
+            profile: self.profile.clone(),
+            hosts: self.hosts.clone(),
+            is_profile_auto_detect: self.is_profile_auto_detect,
+        }
     }
 }
