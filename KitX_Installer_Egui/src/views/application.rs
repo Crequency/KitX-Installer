@@ -57,6 +57,7 @@ pub struct AppData {
     can_goto_install_config_step: bool,
     can_goto_install_step: bool,
     install_config: InstallConfig,
+    install_details_visibility: bool,
     download_config: DownloadConfig,
 }
 
@@ -88,6 +89,7 @@ impl Default for AppData {
             can_goto_install_config_step: false,
             can_goto_install_step: false,
             install_config: InstallConfig::default(),
+            install_details_visibility: false,
             download_config: DownloadConfig::default(),
         }
     }
@@ -323,10 +325,11 @@ impl AppData {
                             self.install_config.installation_canceled = false;
                             self.install_config.installation_cancel_requested = false;
                         } else if self.install_config.install_progress == 1.0 {
-                            // If installation finished, we can go to next step
+                            // If installation finished, show the next button
+                            if ui.button(next).clicked() {
                             self.steps = self.steps + 1;
                         }
-
+                        } else {
                         // If haven't requested cancellation, we draw the cancel button
                         // Otherwise, we draw the disabled cancel button
                         ui.add_enabled_ui(
@@ -344,16 +347,12 @@ impl AppData {
                                         .send(1)
                                         .is_err();
 
-                                    self.install_config.installation_cancel_requested = true;
+                                            self.install_config.installation_cancel_requested =
+                                                true;
                                 }
                             }
                             },
                         );
-
-                        if cfg!(debug_assertions) {
-                            if ui.button(self.build_button_text("debug: next")).clicked() {
-                                self.steps = self.steps + 1;
-                            }
                         }
                     } else {
                         // In [Finish] page
@@ -588,6 +587,7 @@ impl AppData {
 
     fn draw_body_installation(&mut self, ui: &mut Ui) {
         self.install_config.update_progress();
+        self.install_config.receive_details();
 
         ui.vertical(|ui| {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
@@ -604,6 +604,41 @@ impl AppData {
                 );
             });
             ui.end_row();
+            ui.add_space(10.0);
+
+            if self.install_details_visibility {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.label("    ");
+                    if ui.button(self.build_button_text("Hide details")).clicked() {
+                        self.install_details_visibility = false;
+                    }
+                });
+                ui.end_row();
+                ui.add_space(10.0);
+
+                let text_style = egui::TextStyle::Body;
+                let row_height = ui.text_style_height(&text_style);
+                let lines = self.install_config.install_details.clone();
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false; 2])
+                    .show_rows(ui, row_height, lines.len(), |ui, row_range| {
+                        for row in row_range {
+                            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                                ui.label("    ");
+                                ui.label(self.build_content_text(lines[row].as_str()));
+                            });
+                            // ui.add_space(5.0);
+                        }
+                    });
+            } else {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.label("    ");
+                    if ui.button(self.build_button_text("View details")).clicked() {
+                        self.install_details_visibility = true;
+                    }
+                });
+                ui.end_row();
+            }
         });
     }
 
