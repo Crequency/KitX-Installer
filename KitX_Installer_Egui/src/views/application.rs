@@ -58,6 +58,7 @@ pub struct AppData {
     can_goto_install_step: bool,
     install_config: InstallConfig,
     install_details_visibility: bool,
+    install_thread_handle: Option<JoinHandle<()>>,
     download_config: DownloadConfig,
 }
 
@@ -90,6 +91,7 @@ impl Default for AppData {
             can_goto_install_step: false,
             install_config: InstallConfig::default(),
             install_details_visibility: false,
+            install_thread_handle: None,
             download_config: DownloadConfig::default(),
         }
     }
@@ -313,13 +315,13 @@ impl AppData {
                                 self.install_config.install_details_channel_receiver = Some(dr);
                                 self.install_config.cancle_channel_sender = Some(cs);
 
-                                win_installer::install(
+                                self.install_thread_handle = Some(win_installer::install(
                                     &self.install_config,
                                     &self.download_config,
                                     ps,
                                     ds,
                                     cr,
-                                );
+                                ));
                             }
                         }
                         if ui.button(previous).clicked() {

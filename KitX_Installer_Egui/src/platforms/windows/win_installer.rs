@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::Write;
 use std::sync::mpsc;
 use std::thread;
+use std::thread::JoinHandle;
 use std::time::Duration;
 
 use crate::data::data_fetcher;
@@ -15,11 +16,11 @@ pub fn install(
     progress: mpsc::Sender<f32>,
     details: mpsc::Sender<String>,
     cancel: mpsc::Receiver<i32>,
-) {
+) -> JoinHandle<()> {
     let ic_config = i_config.clone();
     let dc_config = d_config.clone();
 
-    let _handle = thread::spawn(move || {
+    let handle = thread::spawn(move || {
         let mut is_canceled = false;
         let mut current_progress = 0.0;
 
@@ -66,6 +67,7 @@ pub fn install(
         if !check_cancel() {
             // Download installation files.
 
+            report_progress(0.05);
             report_detail("┌ Downloading installation files ...");
 
             // Create installation path.
@@ -80,6 +82,7 @@ pub fn install(
                 report_detail("! Failed to create installation path, quiting ...");
                 // TODO: Cancel installation.
             }
+            report_progress(0.10);
 
             // Get download url from download config.
             let download_url = dc_config.get_full_url("github.com");
@@ -94,6 +97,7 @@ pub fn install(
             // Fetch installation files in binary.
             let bytes = data_fetcher::fetch_binary(download_url);
             report_detail(format!("├ Downloaded {} bytes.", bytes.len()).as_str());
+            report_progress(0.40);
 
             // Save installation files to target file path.
             let target_file_path = format!(
@@ -222,6 +226,8 @@ pub fn install(
 
         report_detail("> Installation complete.");
     });
+
+    handle
 }
 
 fn cancel_installation<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
