@@ -13,9 +13,9 @@ use crate::data::install_config::InstallConfig;
 pub fn install(
     i_config: &InstallConfig,
     d_config: &DownloadConfig,
-    progress: mpsc::Sender<f32>,
-    details: mpsc::Sender<String>,
-    cancel: mpsc::Receiver<i32>,
+    progress_report_channel_sender: mpsc::Sender<f32>,
+    details_report_channel_sender: mpsc::Sender<String>,
+    cancel_command_channel_receiver: mpsc::Receiver<i32>,
 ) -> JoinHandle<()> {
     let ic_config = i_config.clone();
     let dc_config = d_config.clone();
@@ -28,7 +28,7 @@ pub fn install(
         // Return the value of `is_canceled`.
         let mut check_cancel = move || {
             if !is_canceled {
-                if cancel.try_recv().is_ok() {
+                if cancel_command_channel_receiver.try_recv().is_ok() {
                     is_canceled = true;
                 }
             }
@@ -43,7 +43,7 @@ pub fn install(
                 return current_progress;
             }
             current_progress = value;
-            if progress.send(value).is_err() {
+            if progress_report_channel_sender.send(value).is_err() {
                 println!("! Failed to send progress.");
             } else {
                 if cfg!(debug_assertions) {
@@ -56,7 +56,10 @@ pub fn install(
         // Report installation details to main thread though details channel.
         let report_detail = move |content: &str| {
             println!("{}", content);
-            if details.send(content.to_string()).is_err() {
+            if details_report_channel_sender
+                .send(content.to_string())
+                .is_err()
+            {
                 println!("! Failed to send detail.");
             }
         };

@@ -14,6 +14,7 @@ pub struct InstallConfig {
     pub cancle_channel_sender: Option<mpsc::Sender<i32>>,
     pub installation_canceled: bool,
     pub installation_cancel_requested: bool,
+    pub installation_failed_tip_pushed: bool,
 }
 
 impl InstallConfig {
@@ -36,6 +37,7 @@ impl InstallConfig {
             cancle_channel_sender: None,
             installation_canceled: false,
             installation_cancel_requested: false,
+            installation_failed_tip_pushed: false,
         }
     }
 
@@ -84,6 +86,7 @@ impl Clone for InstallConfig {
             cancle_channel_sender: self.cancle_channel_sender.clone(),
             installation_canceled: self.installation_canceled,
             installation_cancel_requested: self.installation_cancel_requested,
+            installation_failed_tip_pushed: self.installation_failed_tip_pushed,
         }
     }
 }

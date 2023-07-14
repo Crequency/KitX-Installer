@@ -1,4 +1,4 @@
-﻿use std::sync::mpsc;
+﻿use std::{sync::mpsc, thread::JoinHandle};
 
 use eframe::{
     egui::{self, RichText, Ui},
@@ -302,25 +302,25 @@ impl AppData {
 
                                 self.steps = self.steps + 1;
 
-                                // Progress Channel
-                                let (ps, pr) = mpsc::channel();
+                                // Progress Report Channel
+                                let (prcs, prcr) = mpsc::channel();
 
-                                // Details Channel
-                                let (ds, dr) = mpsc::channel();
+                                // Details Report Channel
+                                let (drcs, drcr) = mpsc::channel();
 
-                                // Cancel Channel
-                                let (cs, cr) = mpsc::channel();
+                                // Cancel Command Send Channel
+                                let (ccscs, ccscr) = mpsc::channel();
 
-                                self.install_config.progress_channel_receiver = Some(pr);
-                                self.install_config.install_details_channel_receiver = Some(dr);
-                                self.install_config.cancle_channel_sender = Some(cs);
+                                self.install_config.progress_channel_receiver = Some(prcr);
+                                self.install_config.install_details_channel_receiver = Some(drcr);
+                                self.install_config.cancle_channel_sender = Some(ccscs);
 
                                 self.install_thread_handle = Some(win_installer::install(
                                     &self.install_config,
                                     &self.download_config,
-                                    ps,
-                                    ds,
-                                    cr,
+                                    prcs,
+                                    drcs,
+                                    ccscr,
                                 ));
                             }
                         }
@@ -334,22 +334,49 @@ impl AppData {
                     } else if self.steps == 3 {
                         // In [Install] page
 
-                        // If cancellation requested and progress reset to 0.0, then cancel success
-                        // So we can back to previous step and reset related data
-                        if self.install_config.install_progress == 0.0
-                            && self.install_config.installation_cancel_requested
+                        // If installation not finished and not canceled, check thread status
+                        if self.install_thread_handle.is_some()
+                            && self.install_thread_handle.as_ref().unwrap().is_finished()
                         {
-                            self.steps = self.steps - 1;
+                            // Because installation thread finished, we can reset cancel status
                             self.install_config.installation_canceled = false;
                             self.install_config.installation_cancel_requested = false;
-                        } else if self.install_config.install_progress == 1.0 {
-                            // If installation finished, show the next button
+
+                            if self.install_config.install_progress == 1.0 {
+                                // If installation finished and succeeded, show the next button
                             if ui.button(next).clicked() {
                                 println!();
                                 println!("^ User clicked [Next] button in [Install] page.");
 
                             self.steps = self.steps + 1;
                         }
+                        } else {
+                                // Force installation progress sync to installation thread.
+                                for _ in 0..100 {
+                                    self.install_config.update_progress();
+                                }
+
+                                // If installation progress not reset to 0.0 but thread finished,
+                                //   it means installation thread exit unexpectlly.
+                                if self.install_config.install_progress != 0.0 {
+                                    if !self.install_config.installation_failed_tip_pushed {
+                                        let tip = "! Failed to receive details. This means installation thread exit unexpectlly.";
+                                        println!("{}", tip);
+
+                                        self.install_config.install_details.push(tip.to_string());
+                                        self.install_config.installation_failed_tip_pushed = true;
+                                    }
+                                }
+
+                                if ui.button(previous).clicked() {
+                                    println!("^ User clicked [Previous] button in [Install] page.");
+
+                                    // Reset thread handle to none.
+                                    self.install_thread_handle = None;
+
+                                    self.steps = self.steps - 1;
+                                }
+                            }
                         } else {
                         // If haven't requested cancellation, we draw the cancel button
                         // Otherwise, we draw the disabled cancel button
