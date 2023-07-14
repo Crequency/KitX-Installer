@@ -1,4 +1,6 @@
 ﻿use std::fs::create_dir_all;
+use std::fs::File;
+use std::io::Write;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -88,8 +90,30 @@ pub fn install(
                 )
                 .as_str(),
             );
-            let _bytes = data_fetcher::fetch_binary(download_url);
-            report_detail(format!("├ Downloaded {} bytes.", _bytes.len()).as_str());
+
+            // Fetch installation files in binary.
+            let bytes = data_fetcher::fetch_binary(download_url);
+            report_detail(format!("├ Downloaded {} bytes.", bytes.len()).as_str());
+
+            // Save installation files to target file path.
+            let target_file_path = format!(
+                "{}/kitx-{}.7z",
+                ic_config.installation_path.clone(),
+                dc_config.profile.clone()
+            );
+            report_detail(
+                format!(
+                    "├ Saving installation files to `{}` ...",
+                    target_file_path.clone()
+                )
+                .as_str(),
+            );
+            let file = File::create(target_file_path.clone());
+            if file.is_err() {
+                report_detail("! Failed to create installation file, quiting ...");
+            }
+            file.unwrap().write_all(bytes.as_slice()).unwrap();
+            report_detail(format!("├ Saved to `{}`.", target_file_path.clone()).as_str());
 
             report_detail("└ Installation files downloaded.");
 
@@ -201,7 +225,7 @@ pub fn install(
 }
 
 fn cancel_installation<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
-    config: InstallConfig,
+    _config: InstallConfig,
     report_progress: &mut RP,
     report_detail: RD,
 ) {
