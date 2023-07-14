@@ -248,10 +248,10 @@ impl AppData {
             });
     }
 
-    fn draw_bottom_panel(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+    fn draw_bottom_panel(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(false)
-            .min_height(0.0)
+            .min_height(40.0)
             .default_height(40.0)
             .show_inside(ui, |ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -266,6 +266,12 @@ impl AppData {
 
                         if self.steps == 0 || self.can_goto_install_config_step {
                             if ui.button(next).clicked() {
+                                if self.steps == 0 {
+                                    println!("^ User clicked [Next] button in [Hello] page.");
+                                } else {
+                                    println!("^ User clicked [Next] button in [License] page.");
+                                }
+
                                 if self.steps < self.max_steps_count - 1 {
                                     self.steps = self.steps + 1;
                                 }
@@ -274,6 +280,10 @@ impl AppData {
 
                         if self.steps != 0 {
                             if ui.button(previous).clicked() {
+                                if self.steps == 1 {
+                                    println!("^ User clicked [Previous] button in [License] page.");
+                                }
+
                                 if self.steps > 0 {
                                     self.steps = self.steps - 1;
                                 }
@@ -284,6 +294,10 @@ impl AppData {
 
                         if self.can_goto_install_step {
                             if ui.button(install).clicked() {
+                                println!(
+                                    "^ User clicked [Install] button in [Install Config] page."
+                                );
+
                                 self.steps = self.steps + 1;
 
                                 // Progress Channel
@@ -309,6 +323,8 @@ impl AppData {
                             }
                         }
                         if ui.button(previous).clicked() {
+                            println!("^ User clicked [Previous] button in [Install Config] page.");
+
                             if self.steps > 0 {
                                 self.steps = self.steps - 1;
                             }
@@ -327,6 +343,9 @@ impl AppData {
                         } else if self.install_config.install_progress == 1.0 {
                             // If installation finished, show the next button
                             if ui.button(next).clicked() {
+                                println!();
+                                println!("^ User clicked [Next] button in [Install] page.");
+
                             self.steps = self.steps + 1;
                         }
                         } else {
@@ -336,6 +355,12 @@ impl AppData {
                             !self.install_config.installation_cancel_requested,
                             |ui| {
                                 if ui.button(cancel).clicked() {
+                                        println!();
+                                        println!(
+                                            "^ User clicked [Cancel] button in [Install] page."
+                                        );
+                                        println!();
+
                                 if self.install_config.cancle_channel_sender.is_some() {
                                     // When sending error, it means the receiver has been dropped
                                     // So we can assume the cancellation has been finished
@@ -358,7 +383,9 @@ impl AppData {
                         // In [Finish] page
 
                         if ui.button(finish).clicked() {
-                            _frame.close();
+                            println!("^ User clicked [Finish] button in [Finish] page.");
+
+                            frame.close();
                         }
                     }
                 });
@@ -459,7 +486,16 @@ impl AppData {
             let agreement = self.build_content_text(&get_lang("1_agree", &self.lang));
 
             ui.label("    ");
-            ui.checkbox(&mut self.license_agreed, agreement);
+            if ui.checkbox(&mut self.license_agreed, agreement).changed() {
+                println!(
+                    "^ User {} with the license.",
+                    if self.license_agreed {
+                        "agreed"
+                    } else {
+                        "disagreed"
+                    }
+                );
+            }
             ui.end_row();
         });
     }
@@ -501,10 +537,22 @@ impl AppData {
                     self.build_content_text(&get_lang("2_launch_after_install", &self.lang));
 
                 ui.label("");
-                ui.checkbox(
+                if ui
+                    .checkbox(
                     &mut self.install_config.windows_config.create_desktop_shortcut,
                     desktop_shortcut,
+                    )
+                    .changed()
+                {
+                    println!(
+                        "^ User {} to create desktop shortcut.",
+                        if self.install_config.windows_config.create_desktop_shortcut {
+                            "chose"
+                        } else {
+                            "canceled"
+                        }
                 );
+                };
                 ui.end_row();
 
                 ui.label("");
@@ -525,13 +573,29 @@ impl AppData {
 
                 if cfg!(target_os = "windows") {
                     ui.label("");
-                    ui.checkbox(
+                    if ui
+                        .checkbox(
                         &mut self
                             .install_config
                             .windows_config
                             .create_start_menu_shortcut,
                         start_menu_shortcut,
+                        )
+                        .changed()
+                    {
+                        println!(
+                            "^ User {} to create start menu shortcut.",
+                            if self
+                                .install_config
+                                .windows_config
+                                .create_start_menu_shortcut
+                            {
+                                "chose"
+                            } else {
+                                "canceled"
+                            }
                     );
+                    };
                     ui.end_row();
 
                     ui.label("");
@@ -552,18 +616,42 @@ impl AppData {
                 }
 
                 ui.label("");
-                ui.checkbox(
+                if ui
+                    .checkbox(
                     &mut self.install_config.install_as_portable,
                     portable_install,
+                    )
+                    .changed()
+                {
+                    println!(
+                        "^ User {} to install as portable mode.",
+                        if self.install_config.install_as_portable {
+                            "chose"
+                        } else {
+                            "canceled"
+                        }
                 );
+                };
                 ui.end_row();
                 ui.end_row();
 
                 ui.label("");
-                ui.checkbox(
+                if ui
+                    .checkbox(
                     &mut self.install_config.launch_after_install,
                     launch_after_install,
+                    )
+                    .changed()
+                {
+                    println!(
+                        "^ User {} to launch after install.",
+                        if self.install_config.launch_after_install {
+                            "chose"
+                        } else {
+                            "canceled"
+                        }
                 );
+                };
                 ui.end_row();
                 ui.end_row();
 
