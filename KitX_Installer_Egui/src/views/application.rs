@@ -570,7 +570,11 @@ impl AppData {
                 ui.label("");
                 ui.label(format!(
                     "Installing version: {}",
-                    self.download_config.version
+                    if self.download_config.version_patched() {
+                        self.download_config.version.clone()
+                    } else {
+                        "latest (cause version not patched yet)".to_string()
+                    }
                 ));
                 ui.end_row();
                 ui.end_row();
@@ -578,7 +582,12 @@ impl AppData {
                 ui.label("");
                 ui.label(format!(
                     "Installing profile: {}",
-                    self.download_config.profile
+                    self.download_config.profile.clone()
+                        + if self.download_config.is_profile_auto_detect {
+                            " (auto detect)"
+                        } else {
+                            ""
+                        }
                 ));
                 ui.end_row();
                 ui.end_row();
