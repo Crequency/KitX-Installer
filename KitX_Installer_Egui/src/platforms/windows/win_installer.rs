@@ -9,6 +9,7 @@ use std::time::Duration;
 use crate::data::data_fetcher;
 use crate::data::download_config::DownloadConfig;
 use crate::data::install_config::InstallConfig;
+use crate::utils::assets_manager;
 
 pub fn install(
     i_config: &InstallConfig,
@@ -67,9 +68,8 @@ pub fn install(
         println!();
         report_detail("> Installing...");
 
+        // Download installation files.
         if !check_cancel() {
-            // Download installation files.
-
             report_progress(0.05);
             report_detail("┌ Downloading installation files ...");
 
@@ -127,21 +127,20 @@ pub fn install(
             report_progress(0.50);
         }
 
+        // Extract installation files.
         if !check_cancel() {
-            // Extract installation files.
-
             report_detail("┌ Extracting installation files ...");
 
-            thread::sleep(Duration::from_millis(500));
+            report_detail("├ Extracting 7z file ...");
+            let v7z_file = assets_manager::release_7z(ic_config.installation_path.clone());
 
             report_detail("└ Installation files extracted.");
 
             report_progress(0.65);
         }
 
+        // Move installation files to installation path.
         if !check_cancel() {
-            // Move installation files to installation path.
-
             report_detail("┌ Moving installation files to installation path ...");
 
             thread::sleep(Duration::from_millis(300));
@@ -151,9 +150,8 @@ pub fn install(
             report_progress(0.80);
         }
 
+        // Update access permissions of installation path.
         if !check_cancel() {
-            // Update access permissions of installation path.
-
             report_detail("┌ Updating installation path permissions ...");
 
             thread::sleep(Duration::from_millis(100));
@@ -163,9 +161,8 @@ pub fn install(
             report_progress(0.85);
         }
 
+        // Create desktop shortcut and start menu shortcut.
         if !check_cancel() {
-            // Create desktop shortcut and start menu shortcut.
-
             report_detail("┌ Creating shortcuts ...");
 
             thread::sleep(Duration::from_millis(100));
@@ -175,9 +172,8 @@ pub fn install(
             report_progress(0.90);
         }
 
+        // Insert application info to registry.
         if !check_cancel() {
-            // Insert application info to registry.
-
             report_detail("┌ Inserting application info to registry ...");
 
             thread::sleep(Duration::from_millis(100));
@@ -187,9 +183,8 @@ pub fn install(
             report_progress(0.95);
         }
 
+        // Insert file association info to registry.
         if !check_cancel() {
-            // Insert file association info to registry.
-
             report_detail("┌ Inserting file association info to registry ...");
 
             thread::sleep(Duration::from_millis(100));
@@ -199,9 +194,8 @@ pub fn install(
             report_progress(0.975);
         }
 
+        // Insert uninstall info to registry and create uninstaller.
         if !check_cancel() {
-            // Insert uninstall info to registry and create uninstaller.
-
             report_detail("┌ Inserting uninstall info to registry ...");
 
             thread::sleep(Duration::from_millis(100));

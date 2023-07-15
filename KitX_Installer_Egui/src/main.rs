@@ -2,6 +2,7 @@
 
 mod data;
 mod platforms;
+mod utils;
 mod views;
 
 mod app_info;
