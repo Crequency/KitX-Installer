@@ -3,6 +3,7 @@
 use eframe::{
     egui::{self, RichText, Ui},
     epaint::{Color32, Vec2},
+    IconData,
 };
 
 use crate::{
@@ -14,6 +15,26 @@ use crate::{
 };
 
 use super::translations::{self, get_lang, Languages};
+
+// Load icon from include bytes in rgba8 mode.
+// Return `IconData`.
+pub fn load_icon() -> IconData {
+    let (icon_rgba, icon_width, icon_height) = {
+        let icon = include_bytes!("../../assets/icon.ico");
+        let image = image::load_from_memory(icon)
+            .expect("! Failed to load icon to memery")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+
+    eframe::IconData {
+        rgba: icon_rgba,
+        width: icon_width,
+        height: icon_height,
+    }
+}
 
 // Get native options for the application.
 pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
@@ -28,6 +49,7 @@ pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
         // max_window_size: Some(size),
         min_window_size: Some(min_size),
         // resizable: false,
+        icon_data: Some(load_icon()),
         ..Default::default()
     };
 
@@ -344,13 +366,13 @@ impl AppData {
 
                             if self.install_config.install_progress == 1.0 {
                                 // If installation finished and succeeded, show the next button
-                            if ui.button(next).clicked() {
-                                println!();
-                                println!("^ User clicked [Next] button in [Install] page.");
+                                if ui.button(next).clicked() {
+                                    println!();
+                                    println!("^ User clicked [Next] button in [Install] page.");
 
-                            self.steps = self.steps + 1;
-                        }
-                        } else {
+                                    self.steps = self.steps + 1;
+                                }
+                            } else {
                                 // Force installation progress sync to installation thread.
                                 for _ in 0..100 {
                                     self.install_config.update_progress();
@@ -378,35 +400,35 @@ impl AppData {
                                 }
                             }
                         } else {
-                        // If haven't requested cancellation, we draw the cancel button
-                        // Otherwise, we draw the disabled cancel button
-                        ui.add_enabled_ui(
-                            !self.install_config.installation_cancel_requested,
-                            |ui| {
-                                if ui.button(cancel).clicked() {
+                            // If haven't requested cancellation, we draw the cancel button
+                            // Otherwise, we draw the disabled cancel button
+                            ui.add_enabled_ui(
+                                !self.install_config.installation_cancel_requested,
+                                |ui| {
+                                    if ui.button(cancel).clicked() {
                                         println!();
                                         println!(
                                             "^ User clicked [Cancel] button in [Install] page."
                                         );
                                         println!();
 
-                                if self.install_config.cancle_channel_sender.is_some() {
-                                    // When sending error, it means the receiver has been dropped
-                                    // So we can assume the cancellation has been finished
-                                    self.install_config.installation_canceled = self
-                                        .install_config
-                                        .cancle_channel_sender
-                                        .as_ref()
-                                        .unwrap()
-                                        .send(1)
-                                        .is_err();
+                                        if self.install_config.cancle_channel_sender.is_some() {
+                                            // When sending error, it means the receiver has been dropped
+                                            // So we can assume the cancellation has been finished
+                                            self.install_config.installation_canceled = self
+                                                .install_config
+                                                .cancle_channel_sender
+                                                .as_ref()
+                                                .unwrap()
+                                                .send(1)
+                                                .is_err();
 
                                             self.install_config.installation_cancel_requested =
                                                 true;
-                                }
-                            }
-                            },
-                        );
+                                        }
+                                    }
+                                },
+                            );
                         }
                     } else {
                         // In [Finish] page
@@ -568,8 +590,8 @@ impl AppData {
                 ui.label("");
                 if ui
                     .checkbox(
-                    &mut self.install_config.windows_config.create_desktop_shortcut,
-                    desktop_shortcut,
+                        &mut self.install_config.windows_config.create_desktop_shortcut,
+                        desktop_shortcut,
                     )
                     .changed()
                 {
@@ -580,7 +602,7 @@ impl AppData {
                         } else {
                             "canceled"
                         }
-                );
+                    );
                 };
                 ui.end_row();
 
@@ -604,11 +626,11 @@ impl AppData {
                     ui.label("");
                     if ui
                         .checkbox(
-                        &mut self
-                            .install_config
-                            .windows_config
-                            .create_start_menu_shortcut,
-                        start_menu_shortcut,
+                            &mut self
+                                .install_config
+                                .windows_config
+                                .create_start_menu_shortcut,
+                            start_menu_shortcut,
                         )
                         .changed()
                     {
@@ -623,7 +645,7 @@ impl AppData {
                             } else {
                                 "canceled"
                             }
-                    );
+                        );
                     };
                     ui.end_row();
 
@@ -647,8 +669,8 @@ impl AppData {
                 ui.label("");
                 if ui
                     .checkbox(
-                    &mut self.install_config.install_as_portable,
-                    portable_install,
+                        &mut self.install_config.install_as_portable,
+                        portable_install,
                     )
                     .changed()
                 {
@@ -659,7 +681,7 @@ impl AppData {
                         } else {
                             "canceled"
                         }
-                );
+                    );
                 };
                 ui.end_row();
                 ui.end_row();
@@ -667,8 +689,8 @@ impl AppData {
                 ui.label("");
                 if ui
                     .checkbox(
-                    &mut self.install_config.launch_after_install,
-                    launch_after_install,
+                        &mut self.install_config.launch_after_install,
+                        launch_after_install,
                     )
                     .changed()
                 {
@@ -679,7 +701,7 @@ impl AppData {
                         } else {
                             "canceled"
                         }
-                );
+                    );
                 };
                 ui.end_row();
                 ui.end_row();
