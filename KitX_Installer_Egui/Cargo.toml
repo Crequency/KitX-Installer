@@ -26,3 +26,7 @@ winreg = "0.50.0"
 [build-dependencies]
 winres = "0.1.12"
 static_vcruntime = "2.0"
+
+[package.metadata.winres]
+OriginalFilename = "KitX Installer.exe"
+LegalCopyright = "Copyright © Crequency since 2020"
