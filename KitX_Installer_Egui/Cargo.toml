@@ -16,6 +16,7 @@ tokio = { version = "1.28.2", features = ["full"] }
 regex = "1.8.4"
 arguments = "0.7.1"
 winreg = { version = "0.50.0", optional = true }
+# compress-tools = "0.14.3"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.50.0"
