@@ -1,4 +1,4 @@
-﻿use super::{models::host::Host, profile_helper::get_profile};
+﻿use super::models::host::Host;
 
 pub fn get_default_version_str() -> String {
     "$$_!_%Version%_@_$$                                        #".to_string()
@@ -6,6 +6,36 @@ pub fn get_default_version_str() -> String {
 
 pub fn get_default_profile_str() -> String {
     "$$_!_%Profile%_@_$$                                        #".to_string()
+}
+
+pub fn get_profile() -> String {
+    let mut profile = String::new();
+
+    if cfg!(target_os = "windows") {
+        profile += "win";
+    } else if cfg!(target_os = "linux") {
+        profile += "linux";
+    } else if cfg!(target_os = "macos") {
+        profile += "osx";
+    }
+
+    profile += "-";
+
+    if cfg!(target_arch = "x86") {
+        profile += "x86";
+    } else if cfg!(target_arch = "x86_64") {
+        profile += "x64";
+    } else if cfg!(target_arch = "arm") {
+        profile += "arm";
+    } else if cfg!(target_arch = "aarch64") {
+        profile += "arm64";
+    }
+
+    profile += "-";
+
+    profile += "single";
+
+    profile
 }
 
 pub struct DownloadConfig {
@@ -57,7 +87,7 @@ impl DownloadConfig {
         self.profile != get_default_profile_str()
     }
 
-    pub fn all_patched(&self) -> bool {
+    pub fn _all_patched(&self) -> bool {
         self.version_patched() && self.profile_patched()
     }
 
