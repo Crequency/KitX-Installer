@@ -5,10 +5,12 @@ mod platforms;
 mod utils;
 mod views;
 
-mod app_info;
+use std::env;
 
 use arguments::Arguments;
-use std::env;
+use eframe::egui;
+
+mod app_info;
 
 use crate::app_info::{AppInfo, RunMode};
 use crate::views::application;
@@ -94,7 +96,26 @@ fn run_gui(app_info: AppInfo) -> Result<(), eframe::Error> {
     let result = eframe::run_native(
         "KitX Installer",
         options,
-        Box::new(|_cc| Box::<application::AppData>::default()),
+        Box::new(|cc| {
+            let mut fonts = egui::FontDefinitions::default();
+            fonts.font_data.insert(
+                "SrcHei".to_string(),
+                egui::FontData::from_owned(include_bytes!("../assets/fonts/SrcHei.ttf").to_vec()),
+            );
+            fonts
+                .families
+                .entry(egui::FontFamily::Proportional)
+                .or_default()
+                .insert(0, "SrcHei".to_string());
+            fonts
+                .families
+                .entry(egui::FontFamily::Monospace)
+                .or_default()
+                .push("SrcHei".to_string());
+            cc.egui_ctx.set_fonts(fonts);
+
+            Box::<application::AppData>::default()
+        }),
     );
 
     println!();

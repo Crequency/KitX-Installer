@@ -173,6 +173,7 @@ impl AppData {
     fn validater(&mut self) {
         self.can_goto_install_config_step = self.license_agreed;
 
+        // TODO: Add path validation for other platforms.
         if data_validator::is_path_legal_in_windows(&self.install_config.installation_path) {
             self.can_goto_install_step = true;
         } else {
