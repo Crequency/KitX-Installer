@@ -10,6 +10,7 @@ use crate::data::data_fetcher;
 use crate::data::download_config::DownloadConfig;
 use crate::data::install_config::InstallConfig;
 use crate::utils::assets_manager;
+use crate::utils::zip_file_manager;
 
 pub fn install(
     i_config: &InstallConfig,
@@ -133,6 +134,14 @@ pub fn install(
 
             report_detail("├ Extracting 7z file ...");
             let v7z_file = assets_manager::release_7z(ic_config.installation_path.clone());
+            let installation_file = format!("kitx-{}.7z", dc_config.profile.clone());
+            zip_file_manager::decompress_7z_with_7z(
+                v7z_file,
+                ic_config.installation_path.clone(),
+                format!("./{}", installation_file),
+                &mut report_progress.clone(),
+                report_detail.clone(),
+            );
 
             report_detail("└ Installation files extracted.");
 
