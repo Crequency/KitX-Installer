@@ -15,6 +15,8 @@ pub struct InstallConfig {
     pub installation_canceled: bool,
     pub installation_cancel_requested: bool,
     pub installation_failed_tip_pushed: bool,
+    pub extraction_program_path: Option<String>,
+    pub installation_file_path: Option<String>,
 }
 
 impl InstallConfig {
@@ -38,6 +40,8 @@ impl InstallConfig {
             installation_canceled: false,
             installation_cancel_requested: false,
             installation_failed_tip_pushed: false,
+            extraction_program_path: None,
+            installation_file_path: None,
         }
     }
 
@@ -87,6 +91,8 @@ impl Clone for InstallConfig {
             installation_canceled: self.installation_canceled,
             installation_cancel_requested: self.installation_cancel_requested,
             installation_failed_tip_pushed: self.installation_failed_tip_pushed,
+            extraction_program_path: self.extraction_program_path.clone(),
+            installation_file_path: self.installation_file_path.clone(),
         }
     }
 }

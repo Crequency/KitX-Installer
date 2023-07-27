@@ -1,6 +1,8 @@
-﻿use std::fs::create_dir_all;
+﻿use std::fs;
+use std::fs::create_dir_all;
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 use std::thread::JoinHandle;
@@ -19,7 +21,7 @@ pub fn install(
     details_report_channel_sender: mpsc::Sender<String>,
     cancel_command_channel_receiver: mpsc::Receiver<i32>,
 ) -> JoinHandle<()> {
-    let ic_config = i_config.clone();
+    let mut ic_config = i_config.clone();
     let dc_config = d_config.clone();
 
     let handle = thread::spawn(move || {
@@ -109,6 +111,7 @@ pub fn install(
                 ic_config.installation_path.clone(),
                 dc_config.profile.clone()
             );
+            ic_config.installation_file_path = Some(target_file_path.clone());
             report_detail(
                 format!(
                     "├ Saving installation files to `{}` ...",
@@ -123,7 +126,7 @@ pub fn install(
             file.unwrap().write_all(bytes.as_slice()).unwrap();
             report_detail(format!("├ Saved to `{}`.", target_file_path.clone()).as_str());
 
-            report_detail("└ Installation files downloaded.");
+            report_detail("└ [DONE] Installation files downloaded.");
 
             report_progress(0.50);
         }
@@ -133,7 +136,11 @@ pub fn install(
             report_detail("┌ Extracting installation files ...");
 
             report_detail("├ Extracting 7z file ...");
-            let v7z_file = assets_manager::release_7z(ic_config.installation_path.clone());
+
+            ic_config.extraction_program_path = Some(assets_manager::release_7z(
+                ic_config.installation_path.clone(),
+            ));
+            let v7z_file = ic_config.extraction_program_path.clone().unwrap();
             let installation_file = format!("kitx-{}.7z", dc_config.profile.clone());
             zip_file_manager::decompress_7z_with_7z(
                 v7z_file,
@@ -143,18 +150,41 @@ pub fn install(
                 report_detail.clone(),
             );
 
-            report_detail("└ Installation files extracted.");
+            report_detail("└ [DONE] Installation files extracted.");
 
             report_progress(0.65);
         }
 
-        // Move installation files to installation path.
+        // Clean installation files in installation path.
         if !check_cancel() {
-            report_detail("┌ Moving installation files to installation path ...");
+            report_detail("┌ Clean installation files in installation path ...");
 
-            thread::sleep(Duration::from_millis(300));
+            // Sleep to await for 7z process to exit.
+            thread::sleep(Duration::from_millis(3 * 1000));
 
-            report_detail("└ Installation files moved to installation path.");
+            let mut all_cleaned = true;
+
+            if Path::new(ic_config.installation_file_path.clone().unwrap().as_str()).exists() {
+                if fs::remove_file(ic_config.installation_file_path.clone().unwrap()).is_err() {
+                    report_detail("! Failed to remove installation file.");
+                    all_cleaned = false;
+                }
+            }
+
+            if Path::new(ic_config.extraction_program_path.clone().unwrap().as_str()).exists() {
+                if fs::remove_file(ic_config.extraction_program_path.clone().unwrap()).is_err() {
+                    report_detail("! Failed to remove extraction program.");
+                    all_cleaned = false;
+                }
+            }
+
+            if all_cleaned {
+                report_detail("└ [DONE] Installation files cleaned in installation path.");
+            } else {
+                report_detail(
+                    "└ [FAIL] Failed to clean all installation files in installation path.",
+                );
+            }
 
             report_progress(0.80);
         }
@@ -165,7 +195,7 @@ pub fn install(
 
             thread::sleep(Duration::from_millis(100));
 
-            report_detail("└ Installation path permissions updated.");
+            report_detail("└ [DONE] Installation path permissions updated.");
 
             report_progress(0.85);
         }
@@ -176,7 +206,7 @@ pub fn install(
 
             thread::sleep(Duration::from_millis(100));
 
-            report_detail("└ Shortcuts created.");
+            report_detail("└ [DONE] Shortcuts created.");
 
             report_progress(0.90);
         }
@@ -187,7 +217,7 @@ pub fn install(
 
             thread::sleep(Duration::from_millis(100));
 
-            report_detail("└ Application info inserted to registry.");
+            report_detail("└ [DONE] Application info inserted to registry.");
 
             report_progress(0.95);
         }
@@ -198,7 +228,7 @@ pub fn install(
 
             thread::sleep(Duration::from_millis(100));
 
-            report_detail("└ File association info inserted to registry.");
+            report_detail("└ [DONE] File association info inserted to registry.");
 
             report_progress(0.975);
         }
@@ -209,13 +239,13 @@ pub fn install(
 
             thread::sleep(Duration::from_millis(100));
 
-            report_detail("└ Uninstall info inserted to registry.");
+            report_detail("└ [DONE] Uninstall info inserted to registry.");
 
             report_detail("┌ Creating uninstaller program ...");
 
             thread::sleep(Duration::from_millis(3000));
 
-            report_detail("└ Uninstaller program created.");
+            report_detail("└ [DONE] Uninstaller program created.");
 
             report_progress(1.00);
         }
