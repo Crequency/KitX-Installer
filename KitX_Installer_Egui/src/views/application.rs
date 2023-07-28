@@ -758,7 +758,10 @@ impl AppData {
             if self.install_details_visibility {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.label("    ");
-                    if ui.button(self.build_button_text("Hide details")).clicked() {
+                    if ui
+                        .button(self.build_button_text(&get_lang("3_hide_details", &self.lang)))
+                        .clicked()
+                    {
                         self.install_details_visibility = false;
                     }
                 });
@@ -787,7 +790,10 @@ impl AppData {
             } else {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.label("    ");
-                    if ui.button(self.build_button_text("View details")).clicked() {
+                    if ui
+                        .button(self.build_button_text(&get_lang("3_view_details", &self.lang)))
+                        .clicked()
+                    {
                         self.install_details_visibility = true;
                     }
                 });
