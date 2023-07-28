@@ -773,8 +773,13 @@ impl AppData {
                     .show_rows(ui, row_height, lines.len(), |ui, row_range| {
                         for row in row_range {
                             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                                let line = &lines[row];
                                 ui.label("    ");
-                                ui.label(self.build_content_text(lines[row].as_str()));
+                                if ui
+                                    .label(self.build_content_text(line.clone().as_str()))
+                                    .on_hover_text(line.clone())
+                                    .hovered()
+                                {}
                             });
                             // ui.add_space(5.0);
                         }
