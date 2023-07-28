@@ -3,6 +3,7 @@ use std::fs::create_dir_all;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
+use std::process::Command;
 use std::sync::mpsc;
 use std::thread;
 use std::thread::JoinHandle;
@@ -85,7 +86,7 @@ pub fn install(
                 .as_str(),
             );
             if create_dir_all(ic_config.installation_path.clone()).is_err() {
-                report_detail("! Failed to create installation path, quiting ...");
+                report_detail("├ [FAIL] Failed to create installation path, quiting ...");
                 // TODO: Cancel installation.
             }
             report_progress(0.10);
@@ -121,7 +122,7 @@ pub fn install(
             );
             let file = File::create(target_file_path.clone());
             if file.is_err() {
-                report_detail("! Failed to create installation file, quiting ...");
+                report_detail("├ [FAIL] Failed to create installation file, quiting ...");
             }
             file.unwrap().write_all(bytes.as_slice()).unwrap();
             report_detail(format!("├ Saved to `{}`.", target_file_path.clone()).as_str());
@@ -166,14 +167,14 @@ pub fn install(
 
             if Path::new(ic_config.installation_file_path.clone().unwrap().as_str()).exists() {
                 if fs::remove_file(ic_config.installation_file_path.clone().unwrap()).is_err() {
-                    report_detail("! Failed to remove installation file.");
+                    report_detail("├ [FAIL] Failed to remove installation file.");
                     all_cleaned = false;
                 }
             }
 
             if Path::new(ic_config.extraction_program_path.clone().unwrap().as_str()).exists() {
                 if fs::remove_file(ic_config.extraction_program_path.clone().unwrap()).is_err() {
-                    report_detail("! Failed to remove extraction program.");
+                    report_detail("├ [FAIL] Failed to remove extraction program.");
                     all_cleaned = false;
                 }
             }
@@ -193,9 +194,45 @@ pub fn install(
         if !check_cancel() {
             report_detail("┌ Updating installation path permissions ...");
 
-            thread::sleep(Duration::from_millis(100));
+            // Remove end backslash if exists.
+            let path = if ic_config.installation_path.ends_with("\\") {
+                ic_config
+                    .installation_path
+                    .trim_end_matches('\\')
+                    .to_string()
+            } else {
+                ic_config.installation_path.clone()
+            };
 
-            report_detail("└ [DONE] Installation path permissions updated.");
+            let cmd_disable_inheritance = format!("icacls \"{}\" /inheritance:d", path.clone());
+            let cmd_update_permission =
+                format!("icacls \"{}\" /grant Users:(OI)(CI)F", path.clone());
+            let commands = format!("{}\r\n{}", cmd_disable_inheritance, cmd_update_permission);
+
+            let script_path = "./kitx_installer_permission_updater.bat";
+
+            let file = File::create(script_path);
+            if file.is_err() {
+                report_detail("├ [FAIL] Failed to create permission updater script.");
+            } else {
+                file.unwrap().write_all(commands.as_bytes()).unwrap();
+            }
+
+            let output = Command::new(script_path)
+                .output()
+                .expect("Failed to execute script");
+            if output.status.success() {
+                report_detail("├ [DONE] Installation path permissions updated.");
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                report_detail(format!("├ [FAIL] Failed to execute script: {}", stderr).as_str());
+            }
+
+            if fs::remove_file(script_path).is_err() {
+                report_detail("└ [FAIL] Failed to remove permission updater script.");
+            } else {
+                report_detail("└ [DONE] Removed permission updater script.");
+            }
 
             report_progress(0.85);
         }
