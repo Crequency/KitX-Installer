@@ -1,19 +1,18 @@
-﻿use std::fs;
-use std::fs::create_dir_all;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
-use std::process::Command;
-use std::sync::mpsc;
-use std::thread;
-use std::thread::JoinHandle;
-use std::time::Duration;
+﻿use std::{
+    fs::{self, create_dir_all, File},
+    io::Write,
+    path::Path,
+    process::Command,
+    sync::mpsc,
+    thread::{self, JoinHandle},
+    time::Duration,
+};
 
-use crate::data::data_fetcher;
-use crate::data::download_config::DownloadConfig;
-use crate::data::install_config::InstallConfig;
-use crate::utils::assets_manager;
-use crate::utils::zip_file_manager;
+use crate::{
+    data::{data_fetcher, download_config::DownloadConfig, install_config::InstallConfig},
+    platforms::windows::shortcut_helper,
+    utils::{assets_manager, zip_file_manager},
+};
 
 pub fn install(
     i_config: &InstallConfig,
@@ -241,7 +240,59 @@ pub fn install(
         if !check_cancel() {
             report_detail("┌ Creating shortcuts ...");
 
-            thread::sleep(Duration::from_millis(100));
+            let kitx_program_path = format!(
+                "{}\\{}",
+                ic_config.installation_path.clone(),
+                if Path::new(
+                    format!(
+                        "{}\\{}",
+                        ic_config.installation_path.clone(),
+                        "KitX Dashboard.exe"
+                    )
+                    .as_str()
+                )
+                .exists()
+                {
+                    "KitX Dashboard.exe"
+                } else {
+                    "KitX.Dashboard.exe"
+                }
+            );
+
+            let working_dir = ic_config.installation_path.clone();
+            let descr = Some("KitX Dashboard".to_string());
+            let icon_path = Some(kitx_program_path.clone());
+            let window_style = Some(1);
+
+            if ic_config.windows_config.create_desktop_shortcut {
+                shortcut_helper::create_shortcut(
+                    format!(
+                        "{}\\KitX.Dashboard.lnk",
+                        ic_config.clone().windows_config.desktop_path.unwrap()
+                    ),
+                    kitx_program_path.clone(),
+                    None,
+                    working_dir.clone(),
+                    descr.clone(),
+                    icon_path.clone(),
+                    window_style,
+                );
+            }
+
+            if ic_config.windows_config.create_start_menu_shortcut {
+                shortcut_helper::create_shortcut(
+                    format!(
+                        "{}\\KitX Dashboard.lnk",
+                        ic_config.clone().windows_config.start_menu_path.unwrap()
+                    ),
+                    kitx_program_path.clone(),
+                    None,
+                    working_dir.clone(),
+                    descr.clone(),
+                    icon_path.clone(),
+                    window_style,
+                );
+            }
 
             report_detail("└ [DONE] Shortcuts created.");
 
