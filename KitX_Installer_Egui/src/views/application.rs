@@ -325,27 +325,29 @@ impl AppData {
 
                                 self.steps = self.steps + 1;
 
-                                // Progress Report Channel
-                                let (prcs, prcr) = mpsc::channel();
+                                if cfg!(target_os = "windows") {
+                                    // Progress Report Channel
+                                    let (prcs, prcr) = mpsc::channel();
 
-                                // Details Report Channel
-                                let (drcs, drcr) = mpsc::channel();
+                                    // Details Report Channel
+                                    let (drcs, drcr) = mpsc::channel();
 
-                                // Cancel Command Send Channel
-                                let (ccscs, ccscr) = mpsc::channel();
+                                    // Cancel Command Send Channel
+                                    let (ccscs, ccscr) = mpsc::channel();
 
-                                self.install_config.progress_channel_receiver = Some(prcr);
-                                self.install_config.install_details_channel_receiver = Some(drcr);
-                                self.install_config.cancle_channel_sender = Some(ccscs);
+                                    self.install_config.progress_channel_receiver = Some(prcr);
+                                    self.install_config.install_details_channel_receiver = Some(drcr);
+                                    self.install_config.cancle_channel_sender = Some(ccscs);
 
-                                self.install_thread_handle = Some(win_installer::install(
-                                    self.lang.clone(),
-                                    &self.install_config,
-                                    &self.download_config,
-                                    prcs,
-                                    drcs,
-                                    ccscr,
-                                ));
+                                    self.install_thread_handle = Some(win_installer::install(
+                                        self.lang.clone(),
+                                        &self.install_config,
+                                        &self.download_config,
+                                        prcs,
+                                        drcs,
+                                        ccscr,
+                                    ));
+                                }
                             }
                         }
                         if ui.button(previous).clicked() {
