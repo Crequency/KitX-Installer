@@ -17,6 +17,8 @@ pub struct InstallConfig {
     pub installation_failed_tip_pushed: bool,
     pub extraction_program_path: Option<String>,
     pub installation_file_path: Option<String>,
+    pub program_path: Option<String>,
+    pub dll_path: Option<String>,
 }
 
 impl InstallConfig {
@@ -42,6 +44,8 @@ impl InstallConfig {
             installation_failed_tip_pushed: false,
             extraction_program_path: None,
             installation_file_path: None,
+            program_path: None,
+            dll_path: None,
         }
     }
 
@@ -93,6 +97,8 @@ impl Clone for InstallConfig {
             installation_failed_tip_pushed: self.installation_failed_tip_pushed,
             extraction_program_path: self.extraction_program_path.clone(),
             installation_file_path: self.installation_file_path.clone(),
+            program_path: self.program_path.clone(),
+            dll_path: self.dll_path.clone(),
         }
     }
 }

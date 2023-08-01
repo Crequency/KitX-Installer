@@ -10,7 +10,7 @@
 
 use crate::{
     data::{data_fetcher, download_config::DownloadConfig, install_config::InstallConfig},
-    platforms::windows::shortcut_helper,
+    platforms::windows::{reg_helper, shortcut_helper},
     utils::{assets_manager, zip_file_manager},
 };
 
@@ -240,7 +240,7 @@ pub fn install(
         if !check_cancel() {
             report_detail("┌ Creating shortcuts ...");
 
-            let kitx_program_path = format!(
+            let mut kitx_program_path = format!(
                 "{}\\{}",
                 ic_config.installation_path.clone(),
                 if Path::new(
@@ -258,6 +258,8 @@ pub fn install(
                     "KitX.Dashboard.exe"
                 }
             );
+            kitx_program_path = kitx_program_path.replace("\\\\", "\\");
+            ic_config.program_path = Some(kitx_program_path.clone());
 
             let working_dir = ic_config.installation_path.clone();
             let descr = Some("KitX Dashboard".to_string());
@@ -267,7 +269,7 @@ pub fn install(
             if ic_config.windows_config.create_desktop_shortcut {
                 shortcut_helper::create_shortcut(
                     format!(
-                        "{}\\KitX.Dashboard.lnk",
+                        "{}\\KitX Dashboard.lnk",
                         ic_config.clone().windows_config.desktop_path.unwrap()
                     ),
                     kitx_program_path.clone(),
@@ -299,41 +301,67 @@ pub fn install(
             report_progress(0.90);
         }
 
-        // Insert application info to registry.
+        // Insert application info and file association to registry.
         if !check_cancel() {
-            report_detail("┌ Inserting application info to registry ...");
+            report_detail("┌ Inserting application info and file association to registry ...");
 
-            thread::sleep(Duration::from_millis(100));
+            let mut kitx_dll_path = format!(
+                "{}\\{}",
+                ic_config.installation_path.clone(),
+                if Path::new(
+                    format!(
+                        "{}\\{}",
+                        ic_config.installation_path.clone(),
+                        "KitX Dashboard.dll"
+                    )
+                    .as_str()
+                )
+                .exists()
+                {
+                    "KitX Dashboard.dll"
+                } else {
+                    "KitX.Dashboard.dll"
+                }
+            );
+            kitx_dll_path = kitx_dll_path.replace("\\\\", "\\");
+            ic_config.dll_path = Some(kitx_dll_path.clone());
 
-            report_detail("└ [DONE] Application info inserted to registry.");
+            if reg_helper::update_program_registry(
+                ic_config.clone().program_path.unwrap(),
+                kitx_dll_path,
+                ic_config.installation_path.clone(),
+            )
+            .is_ok()
+            {
+                report_detail(
+                    "└ [DONE] Application info and file association inserted to registry.",
+                );
+            } else {
+                report_detail(
+                    "└ [FAIL] Failed to insert application info and file association to registry.",
+                );
+            };
 
             report_progress(0.95);
         }
 
-        // Insert file association info to registry.
+        // Create uninstaller.
         if !check_cancel() {
-            report_detail("┌ Inserting file association info to registry ...");
-
-            thread::sleep(Duration::from_millis(100));
-
-            report_detail("└ [DONE] File association info inserted to registry.");
-
-            report_progress(0.975);
-        }
-
-        // Insert uninstall info to registry and create uninstaller.
-        if !check_cancel() {
-            report_detail("┌ Inserting uninstall info to registry ...");
-
-            thread::sleep(Duration::from_millis(100));
-
-            report_detail("└ [DONE] Uninstall info inserted to registry.");
-
             report_detail("┌ Creating uninstaller program ...");
 
-            thread::sleep(Duration::from_millis(3000));
+            let current_exe = std::env::current_exe().unwrap();
+            let new_name = "Installer.exe";
+            let new_exe = format!(
+                "{}\\{}",
+                ic_config.installation_path.clone().trim_end_matches("\\"),
+                new_name
+            );
 
-            report_detail("└ [DONE] Uninstaller program created.");
+            if fs::copy(current_exe, new_exe).is_ok() {
+                report_detail("└ [DONE] Uninstaller program created.");
+            } else {
+                report_detail("└ [FAIL] Failed to create uninstaller program.");
+            }
 
             report_progress(1.00);
         }
