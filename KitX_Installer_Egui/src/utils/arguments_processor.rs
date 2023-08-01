@@ -39,10 +39,14 @@ pub fn args_to_app_info(args: Arguments) -> Option<AppInfo> {
     let run_in_gui = (clia_run_gui || cfg!(target_os = "windows")) && !clia_run_cli;
 
     return Some(AppInfo {
-        run_mode: if run_in_gui {
-            Some(RunMode::Gui)
+        run_mode: if is_to_uninstall() && args.get::<bool>("silent").unwrap_or(false) {
+            Some(RunMode::SlientUninstall)
         } else {
-            Some(RunMode::Cli)
+            if run_in_gui {
+                Some(RunMode::Gui)
+            } else {
+                Some(RunMode::Cli)
+            }
         },
         version: env!("CARGO_PKG_VERSION").to_string(),
     });

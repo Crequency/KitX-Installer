@@ -1,6 +1,7 @@
 ﻿pub enum RunMode {
     Cli = 1,
     Gui = 0,
+    SlientUninstall = 2,
 }
 
 impl Clone for RunMode {
@@ -8,6 +9,7 @@ impl Clone for RunMode {
         match self {
             RunMode::Cli => RunMode::Cli,
             RunMode::Gui => RunMode::Gui,
+            RunMode::SlientUninstall => RunMode::SlientUninstall,
         }
     }
 }

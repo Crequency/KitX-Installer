@@ -11,6 +11,7 @@ extern crate msgbox;
 use std::env;
 
 use arguments::Arguments;
+use platforms::windows::win_uninstaller;
 
 use crate::{
     app_info::{AppInfo, RunMode},
@@ -46,6 +47,12 @@ fn main() {
         }
         RunMode::Cli => {
             run_cli(app_info);
+        }
+        RunMode::SlientUninstall => {
+            if cfg!(target_os = "windows") {
+                win_uninstaller::uninstall();
+            }
+            // TODO: Implement uninstaller for other platforms.
         }
     }
 }
