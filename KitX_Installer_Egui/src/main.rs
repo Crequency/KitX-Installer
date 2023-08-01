@@ -50,7 +50,9 @@ fn main() {
         }
         RunMode::SlientUninstall => {
             if cfg!(target_os = "windows") {
-                win_uninstaller::uninstall();
+                win_uninstaller::uninstall()
+                    .join()
+                    .expect("Failed to uninstall.");
             }
             // TODO: Implement uninstaller for other platforms.
         }

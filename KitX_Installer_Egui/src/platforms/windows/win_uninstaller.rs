@@ -1,21 +1,28 @@
-﻿use std::fs;
+﻿use std::{
+    fs,
+    thread::{self, JoinHandle},
+};
 
 use super::reg_helper::{self, delete_program_registry};
 
-pub fn uninstall() {
-    let path = reg_helper::fetch_program_installation_path();
+pub fn uninstall() -> JoinHandle<()> {
+    let handle = thread::spawn(|| {
+        let path = reg_helper::fetch_program_installation_path();
 
-    if path.is_some() {
-        if delete_program_registry().is_err() {
-            panic!("Failed to delete program registry.");
+        if path.is_some() {
+            if delete_program_registry().is_err() {
+                panic!("Failed to delete program registry.");
+            }
+            if delete_installation_files(path.unwrap()).is_err() {
+                panic!("Failed to delete installation files.");
+            }
+            delete_shortcuts();
+        } else {
+            panic!("Failed to fetch installation path.");
         }
-        if delete_installation_files(path.unwrap()).is_err() {
-            panic!("Failed to delete installation files.");
-        }
-        delete_shortcuts();
-    } else {
-        panic!("Failed to fetch installation path.");
-    }
+    });
+
+    handle
 }
 
 pub fn delete_shortcuts() {
