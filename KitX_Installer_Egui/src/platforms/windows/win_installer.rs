@@ -12,7 +12,7 @@ use crate::{
     data::{data_fetcher, download_config::DownloadConfig, install_config::InstallConfig},
     msgbox::IconType,
     platforms::windows::{reg_helper, shortcut_helper},
-    utils::{assets_manager, zip_file_manager},
+    utils::{arguments_processor::get_debug_config, assets_manager, zip_file_manager},
     views::translations::{get_lang, Languages},
 };
 
@@ -24,6 +24,7 @@ pub fn install(
     details_report_channel_sender: mpsc::Sender<String>,
     cancel_command_channel_receiver: mpsc::Receiver<i32>,
 ) -> JoinHandle<()> {
+    let debug_config = get_debug_config();
     let mut ic_config = i_config.clone();
     let dc_config = d_config.clone();
 
@@ -75,7 +76,7 @@ pub fn install(
         report_detail("> Installing...");
 
         // Download installation files.
-        if !check_cancel() {
+        if !check_cancel() && !debug_config.install_skip_download {
             report_progress(0.05);
             report_detail("┌ Downloading installation files ...");
 
@@ -135,7 +136,7 @@ pub fn install(
         }
 
         // Extract installation files.
-        if !check_cancel() {
+        if !check_cancel() && !debug_config.install_skip_extract {
             report_detail("┌ Extracting installation files ...");
 
             report_detail("├ Extracting 7z file ...");
@@ -159,7 +160,7 @@ pub fn install(
         }
 
         // Clean installation files in installation path.
-        if !check_cancel() {
+        if !check_cancel() && !debug_config.install_skip_clean {
             report_detail("┌ Clean installation files in installation path ...");
 
             // Sleep to await for 7z process to exit.
@@ -193,7 +194,11 @@ pub fn install(
         }
 
         // Update access permissions of installation path.
-        if !check_cancel() {
+        if !check_cancel()
+            && !debug_config
+                .windows_debug_config
+                .install_skip_folder_permission
+        {
             report_detail("┌ Updating installation path permissions ...");
 
             // Remove end backslash if exists.
@@ -240,7 +245,7 @@ pub fn install(
         }
 
         // Create desktop shortcut and start menu shortcut.
-        if !check_cancel() {
+        if !check_cancel() && !debug_config.windows_debug_config.install_skip_shortcuts {
             report_detail("┌ Creating shortcuts ...");
 
             let mut kitx_program_path = format!(
@@ -305,7 +310,7 @@ pub fn install(
         }
 
         // Insert application info and file association to registry.
-        if !check_cancel() {
+        if !check_cancel() && !debug_config.windows_debug_config.install_skip_registry {
             report_detail("┌ Inserting application info and file association to registry ...");
 
             let mut kitx_dll_path = format!(
@@ -349,7 +354,7 @@ pub fn install(
         }
 
         // Create uninstaller.
-        if !check_cancel() {
+        if !check_cancel() && !debug_config.windows_debug_config.install_skip_uninstaller {
             report_detail("┌ Creating uninstaller program ...");
 
             let current_exe = std::env::current_exe().unwrap();
