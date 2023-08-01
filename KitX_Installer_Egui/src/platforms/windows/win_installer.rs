@@ -16,6 +16,8 @@ use crate::{
     views::translations::{get_lang, Languages},
 };
 
+use super::reg_helper::delete_program_registry;
+
 pub fn install(
     lang: Languages,
     i_config: &InstallConfig,
@@ -75,9 +77,10 @@ pub fn install(
         println!();
         report_detail("> Installing...");
 
-        // Download installation files.
+        report_progress(0.05);
+
+        // Download installation files. (50%)
         if !check_cancel() && !debug_config.install_skip_download {
-            report_progress(0.05);
             report_detail("┌ Downloading installation files ...");
 
             // Create installation path.
@@ -135,7 +138,7 @@ pub fn install(
             report_progress(0.50);
         }
 
-        // Extract installation files.
+        // Extract installation files. (65%)
         if !check_cancel() && !debug_config.install_skip_extract {
             report_detail("┌ Extracting installation files ...");
 
@@ -159,7 +162,7 @@ pub fn install(
             report_progress(0.65);
         }
 
-        // Clean installation files in installation path.
+        // Clean installation files in installation path. (80%)
         if !check_cancel() && !debug_config.install_skip_clean {
             report_detail("┌ Clean installation files in installation path ...");
 
@@ -193,7 +196,7 @@ pub fn install(
             report_progress(0.80);
         }
 
-        // Update access permissions of installation path.
+        // Update access permissions of installation path. (85%)
         if !check_cancel()
             && !debug_config
                 .windows_debug_config
@@ -244,7 +247,7 @@ pub fn install(
             report_progress(0.85);
         }
 
-        // Create desktop shortcut and start menu shortcut.
+        // Create desktop shortcut and start menu shortcut. (90%)
         if !check_cancel() && !debug_config.windows_debug_config.install_skip_shortcuts {
             report_detail("┌ Creating shortcuts ...");
 
@@ -309,7 +312,7 @@ pub fn install(
             report_progress(0.90);
         }
 
-        // Insert application info and file association to registry.
+        // Insert application info and file association to registry. (95%)
         if !check_cancel() && !debug_config.windows_debug_config.install_skip_registry {
             report_detail("┌ Inserting application info and file association to registry ...");
 
@@ -353,7 +356,7 @@ pub fn install(
             report_progress(0.95);
         }
 
-        // Create uninstaller.
+        // Create uninstaller. (100%)
         if !check_cancel() && !debug_config.windows_debug_config.install_skip_uninstaller {
             report_detail("┌ Creating uninstaller program ...");
 
@@ -399,7 +402,7 @@ pub fn install(
 }
 
 fn cancel_installation<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
-    _config: InstallConfig,
+    config: InstallConfig,
     report_progress: &mut RP,
     report_detail: RD,
 ) {
@@ -416,9 +419,11 @@ fn cancel_installation<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
     if installation_progress >= 90 && installation_progress < 100 {
         report_detail("┌ Deleting registry keys...");
 
-        thread::sleep(Duration::from_millis(100));
-
-        report_detail("└ Registry keys deleted.");
+        if delete_program_registry().is_ok() {
+            report_detail("└ [DONE] Registry keys deleted.");
+        } else {
+            report_detail("└ [FAIL] Failed to delete registry keys or they don't exist.");
+        }
 
         report_progress(0.85);
     }
@@ -427,20 +432,37 @@ fn cancel_installation<RP: FnMut(f32) -> f32, RD: Fn(&str)>(
     if installation_progress >= 85 {
         report_detail("┌ Deleting shortcuts...");
 
-        thread::sleep(Duration::from_millis(100));
+        let desktop_shortcut = format!(
+            "{}\\KitX Dashboard.lnk",
+            config.windows_config.desktop_path.unwrap()
+        );
+        let start_menu_shortcut = format!(
+            "{}\\KitX Dashboard.lnk",
+            config.windows_config.start_menu_path.unwrap()
+        );
 
-        report_detail("└ Shortcuts deleted.");
+        if fs::remove_file(desktop_shortcut).is_err() {
+            println!("! Failed to delete desktop shortcut or it doesn't exists.");
+        }
+
+        if fs::remove_file(start_menu_shortcut).is_err() {
+            println!("! Failed to delete start menu shortcut or it doesn't exists.");
+        }
+
+        report_detail("└ [DONE] Shortcuts deleted.");
 
         report_progress(0.80);
     }
 
     // Delete installation files.
-    if installation_progress >= 80 {
+    if installation_progress >= 0 {
         report_detail("┌ Deleting installation files...");
 
-        thread::sleep(Duration::from_millis(1000));
-
-        report_detail("└ Installation files deleted.");
+        if fs::remove_dir_all(config.installation_path.clone()).is_ok() {
+            report_detail("└ [DONE] Installation files deleted.");
+        } else {
+            report_detail("└ [FAIL] Fail to delete all installation files.");
+        }
 
         report_progress(0.0);
     }
