@@ -238,3 +238,28 @@ pub fn delete_program_registry() -> Result<String, Box<dyn Error>> {
 pub fn delete_program_registry() -> Result<(), Box<dyn Error>> {
     Err(())
 }
+
+#[cfg(windows)]
+pub fn fetch_program_installation_path() -> Option<String> {
+    let path_key = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey_with_flags(
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\KitX.Dashboard.exe",
+        KEY_READ,
+    );
+
+    if path_key.is_err() {
+        return None;
+    }
+
+    let path = path_key.unwrap().get_value("Path");
+
+    if path.is_ok() {
+        Some(path.unwrap())
+    } else {
+        None
+    }
+}
+
+#[cfg(not(windows))]
+pub fn fetch_program_installation_path() -> Option<String> {
+    None
+}
