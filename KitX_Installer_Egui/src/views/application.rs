@@ -1,4 +1,4 @@
-﻿use std::{sync::mpsc, thread::JoinHandle};
+﻿use std::{path::Path, process::Command, sync::mpsc, thread::JoinHandle};
 
 use eframe::{
     egui::{self, RichText, Ui},
@@ -454,6 +454,36 @@ impl AppData {
 
                         if ui.button(finish).clicked() {
                             println!("^ User clicked [Finish] button in [Finish] page.");
+
+                            if self.install_config.launch_after_install {
+                                if cfg!(target_os = "windows") {
+                                    let mut kitx_exe_path = format!(
+                                        "{}\\{}",
+                                        self.install_config.installation_path.clone(),
+                                        if Path::new(
+                                            format!(
+                                                "{}\\{}",
+                                                self.install_config.installation_path.clone(),
+                                                "KitX Dashboard.exe"
+                                            )
+                                            .as_str()
+                                        )
+                                        .exists()
+                                        {
+                                            "KitX Dashboard.exe"
+                                        } else {
+                                            "KitX.Dashboard.exe"
+                                        }
+                                    );
+                                    kitx_exe_path = kitx_exe_path.replace("\\\\", "\\");
+
+                                    let _ = Command::new("runas")
+                                        .arg("/TrustLevel:0x20000")
+                                        .arg(format!("\"{}\"", kitx_exe_path))
+                                        .output()
+                                        .expect("! Failed to call `cmd` to run `runas.exe` to launch KitX Dashboard.");
+                                }
+                            }
 
                             frame.close();
                         }
