@@ -11,12 +11,11 @@ extern crate msgbox;
 use std::env;
 
 use arguments::Arguments;
-use eframe::egui;
 
 use crate::{
     app_info::{AppInfo, RunMode},
     utils::arguments_processor,
-    views::application,
+    views::{application, font_helper},
 };
 
 // Entry point of this program.
@@ -63,22 +62,7 @@ fn run_gui(app_info: AppInfo) -> Result<(), eframe::Error> {
         "KitX Installer",
         options,
         Box::new(|cc| {
-            let mut fonts = egui::FontDefinitions::default();
-            fonts.font_data.insert(
-                "SrcHei".to_string(),
-                egui::FontData::from_owned(include_bytes!("../assets/fonts/SrcHei.ttf").to_vec()),
-            );
-            fonts
-                .families
-                .entry(egui::FontFamily::Proportional)
-                .or_default()
-                .insert(0, "SrcHei".to_string());
-            fonts
-                .families
-                .entry(egui::FontFamily::Monospace)
-                .or_default()
-                .push("SrcHei".to_string());
-            cc.egui_ctx.set_fonts(fonts);
+            font_helper::set_default_font(cc);
 
             Box::<application::AppData>::default()
         }),
