@@ -313,7 +313,10 @@ pub fn install(
         }
 
         // Insert application info and file association to registry. (95%)
-        if !check_cancel() && !debug_config.windows_debug_config.install_skip_registry {
+        if !check_cancel()
+            && !debug_config.windows_debug_config.install_skip_registry
+            && !ic_config.install_as_portable
+        {
             report_detail("┌ Inserting application info and file association to registry ...");
 
             let mut kitx_dll_path = format!(
@@ -357,7 +360,10 @@ pub fn install(
         }
 
         // Create uninstaller. (100%)
-        if !check_cancel() && !debug_config.windows_debug_config.install_skip_uninstaller {
+        if !check_cancel()
+            && !debug_config.windows_debug_config.install_skip_uninstaller
+            && !ic_config.install_as_portable
+        {
             report_detail("┌ Creating uninstaller program ...");
 
             let current_exe = std::env::current_exe().unwrap();
