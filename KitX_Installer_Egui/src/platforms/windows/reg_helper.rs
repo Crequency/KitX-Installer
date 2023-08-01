@@ -42,44 +42,46 @@ pub fn update_program_registry(
     exe_path: String,
     dll_path: String,
     dir_path: String,
-) -> Result<(), Box<dyn Error>> {
-    // Registry Tree We Need to Add
-    // + HKEY_CLASSES_ROOT
-    //   + .kxp
-    //     - (Default) = KitX.ExtensionsPackage
-    //     - Content Type = application/kitx-extensions-package
-    //   + KitX.ExtensionsPackage
-    //     - (Default) = KitX Extensions Package
-    //     + DefaultIcon
-    //       - (Default) = {dir_path}\Assets\kxp.ico
-    //     + Shell
-    //       + Open
-    //         - FriendlyAppName = KitX
-    //         + Command
-    //           - (Default) = "{exe_path}" --import-plugin "%1"
-    // + HKEY_LOCAL_MACHINE
-    //   + SOFTWARE
-    //     + Microsoft
-    //       + Windows
-    //         + CurrentVersion
-    //           + App Paths
-    //             + KitX.Dashboard.exe
-    //               - (Default) = {exe_path}
-    //               - Path = {dir_path}
-    //           + Uninstall
-    //             + KitX
-    //               - DisplayName = KitX Dashboard
-    //               - DisplayVersion = {version}
-    //               - DisplayIcon = {exe_path}
-    //               - Publisher = Crequency Studio
-    //               - InstallLocation = {dir_path}
-    //               - UninstallString = {uninstall_string}
-    //               - QuietUninstallString = {uninstall_string} --silent
-    //               - HelpLink = https://kitx.apps.catrol.cn/help
-    //               - URLInfoAbout = https://kitx.apps.catrol.cn/
-    //               - NoModify = 1
-    //               - NoRepair = 1
-    //               - EstimatedSize = sizeof({dir_path})
+) -> Result<String, Box<dyn Error>> {
+    let registry_tree_str = r#"
+        // Registry Tree We Need to Add
+        // + HKEY_CLASSES_ROOT
+        //   + .kxp
+        //     - (Default) = KitX.ExtensionsPackage
+        //     - Content Type = application/kitx-extensions-package
+        //   + KitX.ExtensionsPackage
+        //     - (Default) = KitX Extensions Package
+        //     + DefaultIcon
+        //       - (Default) = {dir_path}\Assets\kxp.ico
+        //     + Shell
+        //       + Open
+        //         - FriendlyAppName = KitX
+        //         + Command
+        //           - (Default) = "{exe_path}" --import-plugin "%1"
+        // + HKEY_LOCAL_MACHINE
+        //   + SOFTWARE
+        //     + Microsoft
+        //       + Windows
+        //         + CurrentVersion
+        //           + App Paths
+        //             + KitX.Dashboard.exe
+        //               - (Default) = {exe_path}
+        //               - Path = {dir_path}
+        //           + Uninstall
+        //             + KitX
+        //               - DisplayName = KitX Dashboard
+        //               - DisplayVersion = {version}
+        //               - DisplayIcon = {exe_path}
+        //               - Publisher = Crequency Studio
+        //               - InstallLocation = {dir_path}
+        //               - UninstallString = {uninstall_string}
+        //               - QuietUninstallString = {uninstall_string} --silent
+        //               - HelpLink = https://kitx.apps.catrol.cn/help
+        //               - URLInfoAbout = https://kitx.apps.catrol.cn/
+        //               - NoModify = 1
+        //               - NoRepair = 1
+        //               - EstimatedSize = sizeof({dir_path})
+        "#;
 
     // Define Basic Registry Keys
     let software_key =
@@ -174,7 +176,7 @@ pub fn update_program_registry(
             .set_value("", &format!("\"{}\" --import-plugin \"%1\"", exe_path))?;
     }
 
-    Ok(())
+    Ok(registry_tree_str.to_string())
 }
 
 #[cfg(not(windows))]
@@ -183,20 +185,22 @@ pub fn update_program_registry() -> Result<(), Box<dyn Error>> {
 }
 
 #[cfg(windows)]
-pub fn delete_program_registry() -> Result<(), Box<dyn Error>> {
-    // Registry Tree Nodes We Need to Delete
-    // + HKEY_CLASSES_ROOT
-    //   - .kxp
-    //   - KitX.ExtensionsPackage
-    // + HKEY_LOCAL_MACHINE
-    //   + SOFTWARE
-    //     + Microsoft
-    //       + Windows
-    //         + CurrentVersion
-    //           + App Paths
-    //             - KitX.Dashboard.exe
-    //           + Uninstall
-    //             - KitX
+pub fn delete_program_registry() -> Result<String, Box<dyn Error>> {
+    let registry_tree_nodes_str = r#"
+        // Registry Tree Nodes We Need to Delete
+        // + HKEY_CLASSES_ROOT
+        //   - .kxp
+        //   - KitX.ExtensionsPackage
+        // + HKEY_LOCAL_MACHINE
+        //   + SOFTWARE
+        //     + Microsoft
+        //       + Windows
+        //         + CurrentVersion
+        //           + App Paths
+        //             - KitX.Dashboard.exe
+        //           + Uninstall
+        //             - KitX
+        "#;
 
     // Define Basic Registry Keys
     let software_key =
@@ -227,7 +231,7 @@ pub fn delete_program_registry() -> Result<(), Box<dyn Error>> {
         classes_root.delete_subkey("KitX.ExtensionsPackage")?;
     }
 
-    Ok(())
+    Ok(registry_tree_nodes_str.to_string())
 }
 
 #[cfg(not(windows))]
