@@ -6,12 +6,15 @@ use eframe::{
     IconData,
 };
 
+use native_dialog::{MessageDialog, MessageType};
+
 use crate::{
     data::{
         data_fetcher, data_validator, download_config::DownloadConfig,
         install_config::InstallConfig,
     },
-    platforms::windows::win_installer,
+    platforms::windows::{win_installer, win_uninstaller},
+    utils::arguments_processor,
 };
 
 use super::translations::{self, get_lang, Languages};
@@ -62,6 +65,9 @@ pub struct AppData {
     frame_per_second: i32,
     lang: Languages,
     lang_selected: bool,
+    is_uninstall: bool,
+    is_uninstall_confirmed: bool,
+    uninstall_thread_handle: Option<JoinHandle<()>>,
     steps: i32,
     max_steps_count: i32,
     heading_text_font_size: f32,
@@ -92,6 +98,9 @@ impl Default for AppData {
             frame_per_second: 60,
             lang: translations::Languages::English,
             lang_selected: false,
+            is_uninstall: arguments_processor::is_to_uninstall(),
+            is_uninstall_confirmed: false,
+            uninstall_thread_handle: None,
             steps: 0,
             max_steps_count: 5,
             heading_text_font_size: 28.0,
@@ -125,44 +134,50 @@ impl AppData {
             return;
         }
 
-        if cfg!(target_os = "windows") {
-            self.install_config.windows_config.init();
-        }
+        if !self.is_uninstall {
+            if cfg!(target_os = "windows") {
+                self.install_config.windows_config.init();
+            }
 
-        if self.license_content == None {
-            if self.license_url_tried {
-                if self.license_url_backup_tried {
-                    let tip =
+            if self.license_content == None {
+                if self.license_url_tried {
+                    if self.license_url_backup_tried {
+                        let tip =
                         "# Fetching license content failed, please check your network connection.";
 
-                    println!("{}", tip);
+                        println!("{}", tip);
 
-                    self.license_content = Some(tip.to_string());
-                    self.license_content_fetched = false;
+                        self.license_content = Some(tip.to_string());
+                        self.license_content_fetched = false;
+                    } else {
+                        println!(
+                            "# Fetching license content from {}",
+                            self.license_url_backup
+                        );
+
+                        self.license_url_backup_tried = true;
+                        self.license_content = data_fetcher::fetch_string(
+                            self.license_url_backup.to_string(),
+                            3 * 1000,
+                        );
+
+                        self.license_content_fetched = true;
+                    }
                 } else {
-                    println!(
-                        "# Fetching license content from {}",
-                        self.license_url_backup
-                    );
+                    println!("# Fetching license content from {}", self.license_url);
 
-                    self.license_url_backup_tried = true;
+                    self.license_url_tried = true;
                     self.license_content =
-                        data_fetcher::fetch_string(self.license_url_backup.to_string(), 3 * 1000);
+                        data_fetcher::fetch_string(self.license_url.to_string(), 3 * 1000);
 
                     self.license_content_fetched = true;
                 }
-            } else {
-                println!("# Fetching license content from {}", self.license_url);
-
-                self.license_url_tried = true;
-                self.license_content =
-                    data_fetcher::fetch_string(self.license_url.to_string(), 3 * 1000);
-
-                self.license_content_fetched = true;
             }
-        }
 
-        self.init = true && self.license_content != None;
+            self.init = true && self.license_content != None;
+        } else {
+            self.init = true;
+        }
 
         if self.init {
             println!("# Application init, launching GUI ...");
@@ -222,7 +237,7 @@ impl AppData {
         });
     }
 
-    fn draw_steps(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+    fn draw_steps(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
         egui::SidePanel::left("left_panel")
             .resizable(false)
             .default_width(200.0)
@@ -239,7 +254,7 @@ impl AppData {
                         if me.steps > step {
                             let finished = me.build_catalog_text(&tip);
                             ui.label(finished.color(
-                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark)
+                                if frame.info().system_theme.unwrap_or(eframe::Theme::Dark)
                                     == eframe::Theme::Light
                                 {
                                     Color32::DARK_GREEN
@@ -250,7 +265,7 @@ impl AppData {
                         } else if me.steps == step {
                             let executing = me.build_catalog_text(&tip);
                             ui.label(executing.color(
-                                if _frame.info().system_theme.unwrap_or(eframe::Theme::Dark)
+                                if frame.info().system_theme.unwrap_or(eframe::Theme::Dark)
                                     == eframe::Theme::Light
                                 {
                                     Color32::DARK_BLUE
@@ -817,10 +832,58 @@ impl AppData {
             ui.label(self.build_content_text("    "));
         });
     }
+
+    fn draw_uninstall(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) -> Result<(), ()> {
+        if !self.is_uninstall_confirmed {
+            let yes = MessageDialog::new()
+                .set_type(MessageType::Info)
+                .set_title("Question")
+                .set_text("Do you want to uninstall KitX totally ?")
+                .show_confirm()
+                .unwrap();
+
+            if yes {
+                self.is_uninstall_confirmed = true;
+                self.uninstall_thread_handle = Some(win_uninstaller::uninstall());
+            } else {
+                return Err(());
+            }
+        }
+
+        if !self.uninstall_thread_handle.as_ref().unwrap().is_finished() {
+            ui.vertical_centered(|ui| {
+                ui.heading(self.build_heading_text("KitX Uninstaller"));
+                ui.label("");
+                ui.label(self.build_content_text("Please wait, uninstalling ..."));
+            });
+        } else {
+            ui.vertical_centered(|ui| {
+                ui.heading(self.build_heading_text("KitX Uninstaller"));
+                ui.label("");
+                ui.label(self.build_content_text("Uninstall finished."));
+                ui.label("");
+                ui.label(self.build_content_text("Thank you for using KitX."));
+            });
+
+            egui::TopBottomPanel::bottom("bottom_panel")
+                .resizable(false)
+                .min_height(40.0)
+                .default_height(40.0)
+                .show_inside(ui, |ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button(self.build_button_text("Finish")).clicked() {
+                            frame.close();
+                        }
+                    });
+                });
+        }
+
+        Ok(())
+    }
 }
 
 impl eframe::App for AppData {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         self.init();
 
         self.frame_index = self.frame_index + 1;
@@ -830,14 +893,20 @@ impl eframe::App for AppData {
 
         if self.init {
             egui::CentralPanel::default().show(ctx, |ui| {
-                if self.lang_selected {
-                    self.draw_steps(ui, _frame);
-                    self.draw_bottom_panel(ui, _frame);
-                    self.draw_body(ui);
+                if !self.is_uninstall {
+                    if self.lang_selected {
+                        self.draw_steps(ui, frame);
+                        self.draw_bottom_panel(ui, frame);
+                        self.draw_body(ui);
 
-                    self.validater();
+                        self.validater();
+                    } else {
+                        self.draw_lang_selection(ui);
+                    }
                 } else {
-                    self.draw_lang_selection(ui);
+                    if self.draw_uninstall(ui, frame).is_err() {
+                        frame.close();
+                    };
                 }
             });
         }
