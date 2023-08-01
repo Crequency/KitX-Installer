@@ -339,6 +339,7 @@ impl AppData {
                                 self.install_config.cancle_channel_sender = Some(ccscs);
 
                                 self.install_thread_handle = Some(win_installer::install(
+                                    self.lang.clone(),
                                     &self.install_config,
                                     &self.download_config,
                                     prcs,

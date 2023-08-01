@@ -12,6 +12,8 @@ use eframe::egui;
 
 mod app_info;
 
+extern crate msgbox;
+
 use crate::app_info::{AppInfo, RunMode};
 use crate::views::application;
 

@@ -10,11 +10,14 @@
 
 use crate::{
     data::{data_fetcher, download_config::DownloadConfig, install_config::InstallConfig},
+    msgbox::IconType,
     platforms::windows::{reg_helper, shortcut_helper},
     utils::{assets_manager, zip_file_manager},
+    views::translations::{get_lang, Languages},
 };
 
 pub fn install(
+    lang: Languages,
     i_config: &InstallConfig,
     d_config: &DownloadConfig,
     progress_report_channel_sender: mpsc::Sender<f32>,
@@ -377,6 +380,14 @@ pub fn install(
         }
 
         report_detail("> Installation complete.");
+
+        if msgbox::create(
+            &get_lang("tip", &lang),
+            &get_lang("installation_finished", &lang),
+            IconType::Info,
+        )
+        .is_err()
+        {};
     });
 
     handle

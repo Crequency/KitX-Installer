@@ -4,11 +4,21 @@ pub enum Languages {
     Chinese = 2,
 }
 
+impl Clone for Languages {
+    fn clone(&self) -> Self {
+        match self {
+            Languages::English => Languages::English,
+            Languages::Chinese => Languages::Chinese,
+        }
+    }
+}
+
 pub fn get_lang(key: &str, lang: &Languages) -> String {
     match lang {
         Languages::English => match key {
             "kitx_installer" => "KitX Installer".to_string(),
             "steps" => "Steps".to_string(),
+            "tip" => "Tip".to_string(),
             "0_hello" => "0. Hello".to_string(),
             "1_license" => "1. License".to_string(),
             "2_install_config" => "2. Installation Config".to_string(),
@@ -43,11 +53,13 @@ pub fn get_lang(key: &str, lang: &Languages) -> String {
             "4_installed" => "    KitX Dashboard had been installed successfully.".to_string(),
             "4_auto_launch" => "    It will be launched after this window closed.".to_string(),
             "4_manually_launch" => "    You can launch it now!".to_string(),
+            "installation_finished" => "Installation finished !".to_string(),
             _ => "Unknown".to_string(),
         },
         Languages::Chinese => match key {
             "kitx_installer" => "KitX 安装器".to_string(),
             "steps" => "步骤".to_string(),
+            "tip" => "提示".to_string(),
             "0_hello" => "0. 欢迎".to_string(),
             "1_license" => "1. 许可协议".to_string(),
             "2_install_config" => "2. 安装配置".to_string(),
@@ -82,6 +94,7 @@ pub fn get_lang(key: &str, lang: &Languages) -> String {
             "4_installed" => "    KitX Dashboard 已经成功被安装到您的设备上.".to_string(),
             "4_auto_launch" => "    KitX Dashboard 将在此窗口关闭后启动.".to_string(),
             "4_manually_launch" => "    您现在可以启动 KitX Dashboard 了".to_string(),
+            "installation_finished" => "安装完成 !".to_string(),
             _ => "未翻译".to_string(),
         },
     }
