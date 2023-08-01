@@ -361,12 +361,7 @@ pub fn install(
             report_detail("┌ Creating uninstaller program ...");
 
             let current_exe = std::env::current_exe().unwrap();
-            let new_name = "Installer.exe";
-            let new_exe = format!(
-                "{}\\{}",
-                ic_config.installation_path.clone().trim_end_matches("\\"),
-                new_name
-            );
+            let new_exe = "C:\\Windows\\Installer\\KitX Installer.exe";
 
             if fs::copy(current_exe, new_exe).is_ok() {
                 report_detail("└ [DONE] Uninstaller program created.");

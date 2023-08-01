@@ -114,7 +114,7 @@ pub fn update_program_registry(
             .output()
             .expect("Failed to run powershell script in order to fetch program version.");
         let version = String::from_utf8(version_output.stdout)?;
-        let uninstall_string = format!("{}\\Installer.exe --uninstall", dir_path.clone());
+        let uninstall_string = "C:\\Windows\\Installer\\KitX Installer.exe --uninstall";
 
         let uninstall_key =
             current_version_key.open_subkey_with_flags("Uninstall", KEY_SET_VALUE)?;
@@ -215,20 +215,20 @@ pub fn delete_program_registry() -> Result<String, Box<dyn Error>> {
     {
         let app_paths_key =
             current_version_key.open_subkey_with_flags("App Paths", KEY_SET_VALUE)?;
-        app_paths_key.delete_subkey("KitX.Dashboard.exe")?;
+        app_paths_key.delete_subkey_all("KitX.Dashboard.exe")?;
     }
 
     // Delete Uninstall
     {
         let uninstall_key =
             current_version_key.open_subkey_with_flags("Uninstall", KEY_SET_VALUE)?;
-        uninstall_key.delete_subkey("KitX")?;
+        uninstall_key.delete_subkey_all("KitX")?;
     }
 
     // Delete file association
     {
-        classes_root.delete_subkey(".kxp")?;
-        classes_root.delete_subkey("KitX.ExtensionsPackage")?;
+        classes_root.delete_subkey_all(".kxp")?;
+        classes_root.delete_subkey_all("KitX.ExtensionsPackage")?;
     }
 
     Ok(registry_tree_nodes_str.to_string())
