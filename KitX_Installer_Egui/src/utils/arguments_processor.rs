@@ -67,3 +67,10 @@ pub fn get_debug_config() -> DebugConfig {
         install_skip_clean: args.get::<bool>("skip-clean").unwrap_or(false),
     }
 }
+
+pub fn is_to_uninstall() -> bool {
+    let src_args = env::args(); // Get arguments from command line.
+    let args: Arguments = arguments::parse(src_args).unwrap(); // Parse arguments.
+
+    args.get::<bool>("uninstall").unwrap_or(false)
+}
