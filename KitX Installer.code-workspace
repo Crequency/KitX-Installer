@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "KitX Installer",
+			"path": "."
+		},
+		{
+			"name": "KitX_Installer_Egui",
+			"path": "KitX_Installer_Egui"
+		},
+		{
+			"name": "KitX_Installer_Egui_Patcher",
+			"path": "KitX_Installer_Egui_Patcher"
+		}
+	],
+	"settings": {}
+}

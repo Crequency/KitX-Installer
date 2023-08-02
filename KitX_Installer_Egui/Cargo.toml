@@ -1,0 +1,48 @@
+[package]
+name = "kitx_installer_egui"
+version = "0.1.0"
+publish = false
+edition = "2021"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+windows = []
+
+[dependencies]
+eframe = "0.22.0"
+env_logger = "0.10.0"
+reqwest = { version = "0.11.18", features = ["blocking"] }
+# tokio = { version = "1.29.1", features = ["full"] }
+regex = "1.9.1"
+arguments = "0.7.2"
+winreg = { version = "0.50.0", optional = true }
+image = "0.24.6"
+msgbox = "0.7.0"
+native-dialog = "0.6.4"
+# compress-tools = "0.14.3"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.50.0"
+
+[build-dependencies]
+winres = "0.1.12"
+static_vcruntime = "2.0.0"
+
+[profile.release]
+# Automatically strip symbols from the binary.
+strip = true
+
+# Optimize for size.
+opt-level = "z"
+
+# Use Link Time Optimization if available.
+lto = true
+
+# Use only one codegen unit to allow for better optimizing.
+codegen-units = 1
+
+[package.metadata.winres]
+OriginalFilename = "KitX Installer.exe"
+LegalCopyright = "Copyright © Crequency since 2020"
