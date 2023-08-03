@@ -4,7 +4,7 @@ fn main() {
     if cfg!(target_os = "windows") {
         println!("Running task from `winres` to set icon and manifest.");
         let mut res = winres::WindowsResource::new();
-        res.set_icon("./assets/icon.ico");
+        res.set_icon("./assets/icons/icon.ico");
         res.set_manifest(
             r#"
             <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
