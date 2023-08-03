@@ -42,3 +42,35 @@ fn u8_to_vec(bytes: &[u8]) -> Vec<u8> {
     }
     vec
 }
+
+pub enum IconScale {
+    X16,
+    X32,
+    X64,
+    X128,
+    X256,
+}
+
+fn get_icons(scale: IconScale) -> &'static [u8] {
+    let bytes: &[u8];
+
+    match scale {
+        IconScale::X16 => {
+            bytes = include_bytes!("../../assets/icons/icon-16x.ico");
+        }
+        IconScale::X32 => {
+            bytes = include_bytes!("../../assets/icons/icon-32x.ico");
+        }
+        IconScale::X64 => {
+            bytes = include_bytes!("../../assets/icons/icon-64x.ico");
+        }
+        IconScale::X128 => {
+            bytes = include_bytes!("../../assets/icons/icon-128x.ico");
+        }
+        IconScale::X256 => {
+            bytes = include_bytes!("../../assets/icons/icon-256x.ico");
+        }
+    }
+
+    bytes
+}
