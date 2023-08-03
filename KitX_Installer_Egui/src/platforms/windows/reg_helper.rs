@@ -1,4 +1,5 @@
 ﻿use std::error::Error;
+
 #[cfg(windows)]
 use winreg::enums::*;
 

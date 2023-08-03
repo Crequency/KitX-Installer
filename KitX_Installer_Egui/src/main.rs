@@ -8,15 +8,15 @@ mod views;
 
 extern crate msgbox;
 
-use std::env;
-
-use arguments::Arguments;
-use platforms::windows::win_uninstaller;
-
-use crate::{
-    app_info::{AppInfo, RunMode},
-    utils::arguments_processor,
-    views::{application, font_helper},
+use {
+    crate::{
+        app_info::{AppInfo, RunMode},
+        utils::arguments_processor,
+        views::{application, font_helper},
+    },
+    arguments::Arguments,
+    platforms::windows::win_uninstaller,
+    std::env,
 };
 
 // Entry point of this program.

@@ -1,5 +1,4 @@
-﻿use std::fs::File;
-use std::io::Write;
+﻿use std::{fs::File, io::Write};
 
 pub fn release_7z(release_path: String) -> String {
     let mut v7z_file = String::new();

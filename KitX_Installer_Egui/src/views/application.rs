@@ -1,23 +1,21 @@
-﻿use std::{path::Path, process::Command, sync::mpsc, thread::JoinHandle};
-
-use eframe::{
-    egui::{self, RichText, Ui},
-    epaint::{Color32, Vec2},
-    IconData,
-};
-
-use native_dialog::{FileDialog, MessageDialog, MessageType};
-
-use crate::{
-    data::{
-        data_fetcher, data_validator, download_config::DownloadConfig,
-        install_config::InstallConfig,
+﻿use {
+    super::translations::{self, get_lang, Languages},
+    crate::{
+        data::{
+            data_fetcher, data_validator, download_config::DownloadConfig,
+            install_config::InstallConfig,
+        },
+        platforms::windows::{win_installer, win_uninstaller},
+        utils::arguments_processor,
     },
-    platforms::windows::{win_installer, win_uninstaller},
-    utils::arguments_processor,
+    eframe::{
+        egui::{self, RichText, Ui},
+        epaint::{Color32, Vec2},
+        IconData,
+    },
+    native_dialog::{FileDialog, MessageDialog, MessageType},
+    std::{path::Path, process::Command, sync::mpsc, thread::JoinHandle},
 };
-
-use super::translations::{self, get_lang, Languages};
 
 // Load icon from include bytes in rgba8 mode.
 // Return `IconData`.

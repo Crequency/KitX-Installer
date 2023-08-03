@@ -1,6 +1,4 @@
-﻿use std::sync::mpsc;
-
-use crate::platforms::windows::install_config::WindowsInstallConfig;
+﻿use {crate::platforms::windows::install_config::WindowsInstallConfig, std::sync::mpsc};
 
 pub struct InstallConfig {
     pub installation_path: String,

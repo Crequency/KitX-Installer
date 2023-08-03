@@ -1,9 +1,10 @@
-﻿use std::{
-    fs,
-    thread::{self, JoinHandle},
+﻿use {
+    super::reg_helper::{self, delete_program_registry},
+    std::{
+        fs,
+        thread::{self, JoinHandle},
+    },
 };
-
-use super::reg_helper::{self, delete_program_registry};
 
 pub fn uninstall() -> JoinHandle<()> {
     let handle = thread::spawn(|| {

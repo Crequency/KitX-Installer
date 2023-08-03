@@ -1,22 +1,22 @@
-﻿use std::{
-    fs::{self, create_dir_all, File},
-    io::Write,
-    path::Path,
-    process::Command,
-    sync::mpsc,
-    thread::{self, JoinHandle},
-    time::Duration,
-};
-
-use crate::{
-    data::{data_fetcher, download_config::DownloadConfig, install_config::InstallConfig},
+﻿use {
+    super::reg_helper::delete_program_registry,
+    crate::{
+        data::{data_fetcher, download_config::DownloadConfig, install_config::InstallConfig},
+        platforms::windows::{reg_helper, shortcut_helper},
+        utils::{arguments_processor::get_debug_config, assets_manager, zip_file_manager},
+        views::translations::{get_lang, Languages},
+    },
     msgbox::IconType,
-    platforms::windows::{reg_helper, shortcut_helper},
-    utils::{arguments_processor::get_debug_config, assets_manager, zip_file_manager},
-    views::translations::{get_lang, Languages},
+    std::{
+        fs::{self, create_dir_all, File},
+        io::Write,
+        path::Path,
+        process::Command,
+        sync::mpsc,
+        thread::{self, JoinHandle},
+        time::Duration,
+    },
 };
-
-use super::reg_helper::delete_program_registry;
 
 pub fn install(
     lang: Languages,

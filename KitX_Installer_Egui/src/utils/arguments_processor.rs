@@ -1,10 +1,12 @@
-﻿use crate::{
-    app_info::{AppInfo, RunMode},
-    data::debug_config::DebugConfig,
-    platforms::windows::debug_config::WindowsDebugConfig,
+﻿use {
+    crate::{
+        app_info::{AppInfo, RunMode},
+        data::debug_config::DebugConfig,
+        platforms::windows::debug_config::WindowsDebugConfig,
+    },
+    arguments::Arguments,
+    std::env,
 };
-use arguments::Arguments;
-use std::env;
 
 // Process arguments and return `AppInfo` if success.
 pub fn args_to_app_info(args: Arguments) -> Option<AppInfo> {
