@@ -6,7 +6,7 @@ use eframe::{
     IconData,
 };
 
-use native_dialog::{MessageDialog, MessageType};
+use native_dialog::{FileDialog, MessageDialog, MessageType};
 
 use crate::{
     data::{
@@ -613,7 +613,15 @@ impl AppData {
                         egui::TextEdit::singleline(&mut self.install_config.installation_path)
                             .hint_text("C:\\Program Files\\Crequency\\KitX"),
                     );
-                    if ui.button("...").clicked() {}
+                    if ui.button("...").clicked() {
+                        println!("^ User clicked [Browse] button to select installation path.");
+
+                        let path = FileDialog::new().show_open_single_dir().unwrap();
+                        if path.is_some() {
+                            self.install_config.installation_path =
+                                path.unwrap().to_str().unwrap().to_string();
+                        }
+                    }
                 });
                 ui.end_row();
                 ui.end_row();
