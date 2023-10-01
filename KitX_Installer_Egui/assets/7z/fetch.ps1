@@ -31,7 +31,11 @@ foreach ($link in $links) {
 }
 
 foreach ($target in $targets) {
-    & .\7zr.exe e $target
+    if ($IsWindows) {
+        & .\7zr.exe e $target
+    } else {
+        7za e $target
+    }
     if ($target.EndsWith(".tar.xz")) {
         $target_2 = $target.Substring(0, $target.LastIndexOf('.'))
         $exe = ""

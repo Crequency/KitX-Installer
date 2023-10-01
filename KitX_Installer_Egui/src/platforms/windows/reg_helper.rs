@@ -181,9 +181,11 @@ pub fn update_program_registry(
 }
 
 #[cfg(not(windows))]
-pub fn update_program_registry() -> Result<(), Box<dyn Error>> {
-    Err(())
-}
+pub fn update_program_registry(
+    exe_path: String,
+    dll_path: String,
+    dir_path: String,
+) -> Result<(), Box<dyn Error>> { Ok(()) }
 
 #[cfg(windows)]
 pub fn delete_program_registry() -> Result<String, Box<dyn Error>> {
@@ -237,7 +239,7 @@ pub fn delete_program_registry() -> Result<String, Box<dyn Error>> {
 
 #[cfg(not(windows))]
 pub fn delete_program_registry() -> Result<(), Box<dyn Error>> {
-    Err(())
+    Ok(())
 }
 
 #[cfg(windows)]
