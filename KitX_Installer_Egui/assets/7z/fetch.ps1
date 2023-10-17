@@ -47,7 +47,7 @@ foreach ($target in $targets) {
         }
 
         tar -xvzf $target_2 $exe
-        mv $exe $target_2.Replace(".tar", "").Replace("7z2301", $exe)
+        Move-Item $exe $target_2.Replace(".tar", "").Replace("7z2301", $exe)
         Remove-Item $target_2
     }
 }
