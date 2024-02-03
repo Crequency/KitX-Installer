@@ -11,20 +11,20 @@ build = "build.rs"
 windows = []
 
 [dependencies]
-eframe = "0.23.0"
-env_logger = "0.10.0"
-reqwest = { version = "0.11.22", features = ["blocking"] }
+eframe = "0.25.0"
+env_logger = "0.11.1"
+reqwest = { version = "0.11.24", features = ["blocking"] }
 # tokio = { version = "1.29.1", features = ["full"] }
-regex = "1.10.2"
+regex = "1.10.3"
 arguments = "0.7.2"
-winreg = { version = "0.51.0", optional = true }
-image = "0.24.7"
+winreg = { version = "0.52.0", optional = true }
+image = "0.24.8"
 msgbox = "0.7.0"
-native-dialog = "0.6.4"
+native-dialog = "0.7.0"
 # compress-tools = "0.14.3"
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.51.0"
+winreg = "0.52.0"
 
 [build-dependencies]
 winres = "0.1.12"
