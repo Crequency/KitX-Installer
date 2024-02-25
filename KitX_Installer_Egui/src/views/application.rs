@@ -9,9 +9,8 @@
         utils::arguments_processor,
     },
     eframe::{
-        egui::{self, RichText, Ui},
+        egui::{self, IconData, RichText, Ui},
         epaint::{Color32, Vec2},
-        IconData,
     },
     native_dialog::{FileDialog, MessageDialog, MessageType},
     std::{path::Path, process::Command, sync::mpsc, thread::JoinHandle},
@@ -30,7 +29,7 @@ pub fn load_icon() -> IconData {
         (rgba, width, height)
     };
 
-    eframe::IconData {
+    egui::IconData {
         rgba: icon_rgba,
         width: icon_width,
         height: icon_height,
@@ -45,12 +44,12 @@ pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
     min_size.y = 480.0;
 
     let options = eframe::NativeOptions {
-        initial_window_size: Some(size),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size(size)
+            .with_min_inner_size(size)
+            .with_drag_and_drop(true)
+            .with_icon(load_icon()),
         centered: true,
-        // max_window_size: Some(size),
-        min_window_size: Some(min_size),
-        // resizable: false,
-        icon_data: Some(load_icon()),
         ..Default::default()
     };
 
@@ -286,7 +285,7 @@ impl AppData {
             });
     }
 
-    fn draw_bottom_panel(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
+    fn draw_bottom_panel(&mut self, ui: &mut Ui, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(false)
             .min_height(40.0)
@@ -483,7 +482,7 @@ impl AppData {
                                 }
                             }
 
-                            frame.close();
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                     }
                 });
@@ -869,7 +868,7 @@ impl AppData {
         });
     }
 
-    fn draw_uninstall(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) -> Result<(), ()> {
+    fn draw_uninstall(&mut self, ui: &mut Ui, ctx: &egui::Context) -> Result<(), ()> {
         if !self.is_uninstall_confirmed {
             let yes = MessageDialog::new()
                 .set_type(MessageType::Info)
@@ -908,7 +907,7 @@ impl AppData {
                 .show_inside(ui, |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button(self.build_button_text("Finish")).clicked() {
-                            frame.close();
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                     });
                 });
@@ -932,7 +931,7 @@ impl eframe::App for AppData {
                 if !self.is_uninstall {
                     if self.lang_selected {
                         self.draw_steps(ui, frame);
-                        self.draw_bottom_panel(ui, frame);
+                        self.draw_bottom_panel(ui, ctx);
                         self.draw_body(ui);
 
                         self.validater();
@@ -940,8 +939,8 @@ impl eframe::App for AppData {
                         self.draw_lang_selection(ui);
                     }
                 } else {
-                    if self.draw_uninstall(ui, frame).is_err() {
-                        frame.close();
+                    if self.draw_uninstall(ui, ctx).is_err() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     };
                 }
             });

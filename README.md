@@ -29,7 +29,9 @@ cd './KitX_Installer/KitX_Installer_Egui'
 Run following command in your terminal to run this program:
 
 ```shell
-cargo run
+# Installer requires Administrator privileges
+# under Windows (sudo mode same in GNU/Linux and MacOS)
+sudo cargo run
 ```
 
 #### Build
