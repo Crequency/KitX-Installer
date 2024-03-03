@@ -36,8 +36,8 @@ pub fn load_icon() -> IconData {
     }
 }
 
-// Get native options for the application.
-pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
+// Build native options for the application.
+pub fn build_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
     let size = size.unwrap_or(egui::vec2(800.0, 500.0));
     let mut min_size = size.clone();
     min_size.x = 780.0;
@@ -48,7 +48,11 @@ pub fn get_native_options(size: Option<Vec2>) -> eframe::NativeOptions {
             .with_inner_size(size)
             .with_min_inner_size(size)
             .with_drag_and_drop(true)
-            .with_icon(load_icon()),
+            .with_icon(load_icon())
+            .with_maximize_button(false)
+            .with_minimize_button(true)
+            .with_resizable(true)
+        ,
         centered: true,
         ..Default::default()
     };
@@ -110,8 +114,8 @@ impl Default for AppData {
                 .to_string(),
             license_url_tried: false,
             license_url_backup:
-                "https://ghproxy.com/raw.githubusercontent.com/Crequency/KitX/main/LICENSE"
-                    .to_string(),
+            "https://ghproxy.com/raw.githubusercontent.com/Crequency/KitX/main/LICENSE"
+                .to_string(),
             license_url_backup_tried: false,
             license_content: None,
             license_content_fetched: false,
@@ -140,7 +144,7 @@ impl AppData {
                 if self.license_url_tried {
                     if self.license_url_backup_tried {
                         let tip =
-                        "# Fetching license content failed, please check your network connection.";
+                            "# Fetching license content failed, please check your network connection.";
 
                         println!("{}", tip);
 
@@ -463,9 +467,9 @@ impl AppData {
                                                 self.install_config.installation_path.clone(),
                                                 "KitX Dashboard.exe"
                                             )
-                                            .as_str()
+                                                .as_str()
                                         )
-                                        .exists()
+                                            .exists()
                                         {
                                             "KitX Dashboard.exe"
                                         } else {
@@ -777,10 +781,10 @@ impl AppData {
                     "Installing profile: {}",
                     self.download_config.profile.clone()
                         + if self.download_config.is_profile_auto_detect {
-                            " (auto detect)"
-                        } else {
-                            ""
-                        }
+                        " (auto detect)"
+                    } else {
+                        ""
+                    }
                 ));
                 ui.end_row();
                 ui.end_row();

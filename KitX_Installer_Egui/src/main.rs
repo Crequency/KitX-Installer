@@ -65,7 +65,7 @@ fn run_gui(app_info: AppInfo) -> Result<(), eframe::Error> {
     println!("Version: v{}", app_info.version);
     println!();
 
-    let options = application::get_native_options(None);
+    let options = application::build_native_options(None);
 
     let result = eframe::run_native(
         "KitX Installer",
