@@ -22,7 +22,7 @@ pub fn load_icon() -> IconData {
     let (icon_rgba, icon_width, icon_height) = {
         let icon = include_bytes!("../../assets/icons/icon.ico");
         let image = image::load_from_memory(icon)
-            .expect("! Failed to load icon to memery")
+            .expect("! Failed to load icon to memory")
             .into_rgba8();
         let (width, height) = image.dimensions();
         let rgba = image.into_raw();
